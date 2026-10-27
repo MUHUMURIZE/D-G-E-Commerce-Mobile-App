@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text } from 'react-native';
+import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -74,7 +75,9 @@ export default function NewAdminProductScreen() {
       notify(t('productSaved'));
       router.replace('/admin/products');
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : t('unknownError'));
+      const message = requestError instanceof Error ? requestError.message : t('unknownError');
+      setError(message);
+      notify(message, 'error');
     } finally {
       setSaving(false);
     }
@@ -99,7 +102,7 @@ export default function NewAdminProductScreen() {
       <AppInput label={t('rating')} value={rating} onChangeText={setRating} keyboardType="decimal-pad" />
       <Text style={styles.label}>{t('productImage')}</Text>
       <Text style={adminStyles.muted}>{t('uploadImageHint')}</Text>
-      {image ? <Image source={{ uri: image.uri }} style={styles.preview} /> : null}
+      {image ? <Image source={{ uri: image.uri }} style={styles.preview} contentFit="cover" /> : null}
       <AppButton title={image ? t('changeImage') : t('chooseImage')} secondary onPress={() => { void chooseImage(); }} />
       <AppButton title={t('saveProduct')} onPress={() => { void submit(); }} loading={saving} />
     </ScrollView>

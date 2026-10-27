@@ -235,6 +235,21 @@ const en = {
   orderProductLookupError: 'Product details unavailable: {{error}}',
   productId: 'Product {{id}}',
   each: 'each',
+  myOrders: 'My orders',
+  languageSettings: 'Language settings',
+  security: 'Security',
+  helpSupport: 'Help & support',
+  aboutApp: 'About the app',
+  securityInfo: 'Keep your sign-in details private and sign out when using a shared device.',
+  helpSupportInfo: 'For help with an order or your account, contact the store through its official support channel.',
+  aboutAppInfo: 'D&G is your shopping app for discovering products and managing your orders.',
+  welcomeUser: 'Welcome, {{name}}',
+  pendingOrders: 'Pending',
+  deliveredOrders: 'Delivered',
+  viewAllOrders: 'View all orders',
+  decreaseQuantity: 'Decrease quantity',
+  increaseQuantity: 'Increase quantity',
+  addedToCart: 'Added to cart.',
 };
 
 export default en;

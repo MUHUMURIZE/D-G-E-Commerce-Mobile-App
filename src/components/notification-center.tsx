@@ -1,25 +1,50 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { palette } from '@/constants/palette';
 
+type NotificationType = 'success' | 'error';
+
+interface ToastMessage {
+  id: number;
+  message: string;
+  type: NotificationType;
+}
+
 interface NotificationContextValue {
-  notify: (message: string) => void;
+  notify: (message: string, type?: NotificationType) => void;
 }
 
 const NotificationContext = createContext<NotificationContextValue | null>(null);
 
 export function NotificationProvider({ children }: { children: ReactNode }) {
-  const [message, setMessage] = useState<string | null>(null);
-  const notify = useCallback((nextMessage: string) => setMessage(nextMessage), []);
+  const [toast, setToast] = useState<ToastMessage | null>(null);
+  const nextId = useRef(0);
+  const notify = useCallback((message: string, type: NotificationType = 'success') => {
+    setToast({ id: ++nextId.current, message, type });
+  }, []);
   const value = useMemo(() => ({ notify }), [notify]);
+
+  useEffect(() => {
+    if (!toast) return undefined;
+    const timeout = setTimeout(
+      () => setToast((current) => current?.id === toast.id ? null : current),
+      toast.type === 'error' ? 4000 : 3000,
+    );
+    return () => clearTimeout(timeout);
+  }, [toast]);
 
   return (
     <NotificationContext.Provider value={value}>
       {children}
-      {message ? (
-        <Pressable accessibilityRole="button" onPress={() => setMessage(null)} style={styles.toast}>
-          <Text style={styles.toastText}>{message}</Text>
+      {toast ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLiveRegion="polite"
+          onPress={() => setToast(null)}
+          style={[styles.toast, toast.type === 'error' ? styles.errorToast : styles.successToast]}>
+          <Text style={styles.toastIcon}>{toast.type === 'error' ? '×' : '✓'}</Text>
+          <Text style={styles.toastText}>{toast.message}</Text>
         </Pressable>
       ) : null}
     </NotificationContext.Provider>
@@ -48,11 +73,23 @@ const styles = StyleSheet.create({
     left: 18,
     right: 18,
     bottom: 28,
-    padding: 15,
-    borderRadius: 12,
-    backgroundColor: palette.ink,
+    minHeight: 54,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 14,
+    shadowColor: palette.shadow,
+    shadowOpacity: 0.18,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 8,
   },
-  toastText: { color: palette.white, fontSize: 14, fontWeight: '600' },
+  successToast: { backgroundColor: palette.success },
+  errorToast: { backgroundColor: palette.danger },
+  toastIcon: { color: palette.white, fontSize: 20, fontWeight: '800' },
+  toastText: { flex: 1, color: palette.white, fontSize: 14, fontWeight: '600' },
   placeholder: {
     padding: 18,
     borderRadius: 14,

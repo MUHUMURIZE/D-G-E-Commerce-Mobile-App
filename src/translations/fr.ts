@@ -235,6 +235,21 @@ const fr = {
   orderProductLookupError: 'Détails du produit indisponibles : {{error}}',
   productId: 'Produit {{id}}',
   each: 'l’unité',
+  myOrders: 'Mes commandes',
+  languageSettings: 'Paramètres de langue',
+  security: 'Sécurité',
+  helpSupport: 'Aide et assistance',
+  aboutApp: 'À propos de l’application',
+  securityInfo: 'Gardez vos identifiants confidentiels et déconnectez-vous sur un appareil partagé.',
+  helpSupportInfo: 'Pour toute question sur une commande ou votre compte, contactez la boutique via son canal d’assistance officiel.',
+  aboutAppInfo: 'D&G est votre application pour découvrir des produits et gérer vos commandes.',
+  welcomeUser: 'Bienvenue, {{name}}',
+  pendingOrders: 'En attente',
+  deliveredOrders: 'Livrées',
+  viewAllOrders: 'Voir toutes les commandes',
+  decreaseQuantity: 'Diminuer la quantité',
+  increaseQuantity: 'Augmenter la quantité',
+  addedToCart: 'Ajouté au panier.',
 };
 
 export default fr;

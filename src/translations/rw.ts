@@ -235,6 +235,21 @@ const rw = {
   orderProductLookupError: 'Ibisobanuro ntibiboneka: {{error}}',
   productId: 'Igicuruzwa {{id}}',
   each: 'kimwe',
+  myOrders: 'Ibyo natumije',
+  languageSettings: 'Guhindura ururimi',
+  security: 'Umutekano',
+  helpSupport: 'Ubufasha',
+  aboutApp: 'Ibyerekeye iyi porogaramu',
+  securityInfo: 'Bika amakuru yo kwinjira mu ibanga kandi usohoke kuri telefoni ikoreshwa n’abandi.',
+  helpSupportInfo: 'Ku kibazo cy’itumiza cyangwa konti yawe, vugana n’iduka ukoresheje inzira yemewe y’ubufasha.',
+  aboutAppInfo: 'D&G ni porogaramu igufasha kureba ibicuruzwa no gucunga ibyo watumije.',
+  welcomeUser: 'Murakaza neza, {{name}}',
+  pendingOrders: 'Birategereje',
+  deliveredOrders: 'Byagejejwe',
+  viewAllOrders: 'Reba ibyo natumije byose',
+  decreaseQuantity: 'Gabanya umubare',
+  increaseQuantity: 'Ongera umubare',
+  addedToCart: 'Byongewe mu gaseke.',
 };
 
 export default rw;

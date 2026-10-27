@@ -1,4 +1,5 @@
-import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { AppButton } from '@/components/ui/app-button';
@@ -44,7 +45,7 @@ export default function CartScreen() {
               || (availableQuantity !== undefined && quantity >= availableQuantity);
             return (
               <View key={product.id} style={styles.item}>
-                <Image source={{ uri: resolveImageUrl(product.imageUrl) }} style={styles.image} />
+                <Image source={{ uri: resolveImageUrl(product.imageUrl) }} style={styles.image} contentFit="cover" />
                 <View style={styles.details}>
                   <Text style={styles.category}>{t(product.category).toUpperCase()}</Text>
                   <Text style={styles.name}>{product.name}</Text>

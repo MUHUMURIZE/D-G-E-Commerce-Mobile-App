@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
 import { AuthGate } from '@/components/auth-gate';
+import { useNotifications } from '@/components/notification-center';
 import { AppButton } from '@/components/ui/app-button';
 import { AppInput } from '@/components/ui/app-input';
 import { Message } from '@/components/ui/message';
@@ -12,7 +13,8 @@ import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { signOut } from '@/redux/slices/authSlice';
 import { authService } from '@/api/authService';
 import type { UserProfile } from '@/types';
-import { useNotifications } from '@/components/notification-center';
+
+type ProfilePanel = 'language' | 'security' | 'help' | 'about' | null;
 
 function ProfileContent() {
   const dispatch = useAppDispatch();
@@ -26,6 +28,7 @@ function ProfileContent() {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [openPanel, setOpenPanel] = useState<ProfilePanel>(null);
 
   const loadProfile = useCallback(async () => {
     setLoading(true);
@@ -36,11 +39,13 @@ function ProfileContent() {
       setName(result.fullName);
       setPhone(result.phone ?? '');
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : t('loadError'));
+      const message = requestError instanceof Error ? requestError.message : t('loadError');
+      setError(message);
+      notify(message, 'error');
     } finally {
       setLoading(false);
     }
-  }, [t]);
+  }, [notify, t]);
 
   useEffect(() => { void Promise.resolve().then(loadProfile); }, [loadProfile]);
 
@@ -48,8 +53,10 @@ function ProfileContent() {
     try {
       await i18n.changeLanguage(language);
       await AsyncStorage.setItem('@dg/language', language);
+      setError(null);
     } catch {
       setError(t('languageSaveError'));
+      notify(t('languageSaveError'), 'error');
     }
   };
 
@@ -62,7 +69,9 @@ function ProfileContent() {
       setEditing(false);
       notify(t('profileSaved'));
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : t('profileSaveError'));
+      const message = requestError instanceof Error ? requestError.message : t('profileSaveError');
+      setError(message);
+      notify(message, 'error');
     } finally {
       setSaving(false);
     }
@@ -91,6 +100,7 @@ function ProfileContent() {
         {profile?.phone ? <Text style={styles.email}>{profile.phone}</Text> : null}
         <Text style={styles.role}>{t(session?.user.role ?? 'customer')}</Text>
       </View>
+
       {editing ? (
         <View style={styles.editForm}>
           <AppInput label={t('fullName')} value={name} onChangeText={setName} />
@@ -101,27 +111,65 @@ function ProfileContent() {
       ) : (
         <AppButton title={t('editProfile')} secondary onPress={() => setEditing(true)} />
       )}
+
+      <Text style={styles.sectionTitle}>{t('accountSettings')}</Text>
+      <View style={styles.menu}>
+        <MenuRow title={t('myOrders')} onPress={() => router.push('/(tabs)/orders')} />
+        <MenuRow
+          title={t('languageSettings')}
+          onPress={() => setOpenPanel(openPanel === 'language' ? null : 'language')}
+        />
+        <MenuRow title={t('security')} onPress={() => setOpenPanel(openPanel === 'security' ? null : 'security')} />
+        <MenuRow title={t('helpSupport')} onPress={() => setOpenPanel(openPanel === 'help' ? null : 'help')} />
+        <MenuRow title={t('aboutApp')} onPress={() => setOpenPanel(openPanel === 'about' ? null : 'about')} />
+        <MenuRow title={t('viewNotifications')} onPress={() => router.push('/notifications')} />
+      </View>
+
+      {openPanel === 'language' ? (
+        <View style={styles.panel}>
+          <Text style={styles.panelTitle}>{t('language')}</Text>
+          <View style={styles.languages}>
+            {(['en', 'rw', 'fr'] as const).map((code) => (
+              <Pressable
+                key={code}
+                accessibilityRole="button"
+                accessibilityState={{ selected: language === code }}
+                onPress={() => { void changeLanguage(code); }}
+                style={[styles.language, language === code && styles.selected]}>
+                <Text style={[styles.languageText, language === code && styles.selectedText]}>
+                  {t(code === 'en' ? 'english' : code === 'rw' ? 'kinyarwanda' : 'french')}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      ) : null}
+      {openPanel === 'security' || openPanel === 'help' || openPanel === 'about' ? (
+        <View style={styles.panel}>
+          <Text style={styles.panelTitle}>
+            {t(openPanel === 'security' ? 'security' : openPanel === 'help' ? 'helpSupport' : 'aboutApp')}
+          </Text>
+          <Text style={styles.panelBody}>
+            {t(openPanel === 'security' ? 'securityInfo' : openPanel === 'help' ? 'helpSupportInfo' : 'aboutAppInfo')}
+          </Text>
+        </View>
+      ) : null}
+
       {session?.user.role === 'admin' ? (
         <AppButton title={t('adminPanel')} onPress={() => router.push('/admin')} />
       ) : null}
-      <AppButton title={t('viewNotifications')} secondary onPress={() => router.push('/notifications')} />
-      <Text style={styles.label}>{t('language')}</Text>
-      <View style={styles.languages}>
-        {(['en', 'rw', 'fr'] as const).map((code) => (
-          <Pressable
-            key={code}
-            accessibilityRole="button"
-            onPress={() => { void changeLanguage(code); }}
-            style={[styles.language, language === code && styles.selected]}>
-            <Text style={[styles.languageText, language === code && styles.selectedText]}>
-              {t(code === 'en' ? 'english' : code === 'rw' ? 'kinyarwanda' : 'french')}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
       {authError ? <Text style={styles.error}>{authError}</Text> : null}
       <AppButton title={t('signOut')} secondary onPress={() => { void dispatch(signOut()); }} />
     </ScrollView>
+  );
+}
+
+function MenuRow({ title, onPress }: { title: string; onPress: () => void }) {
+  return (
+    <Pressable accessibilityRole="button" onPress={onPress} style={styles.menuRow}>
+      <Text style={styles.menuText}>{title}</Text>
+      <Text style={styles.chevron}>›</Text>
+    </Pressable>
   );
 }
 
@@ -134,13 +182,20 @@ const styles = StyleSheet.create({
   content: { padding: 20, paddingBottom: 36, gap: 14 },
   eyebrow: { marginTop: 12, color: palette.gold, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase' },
   title: { marginTop: 2, marginBottom: 5, color: palette.ink, fontSize: 28, fontWeight: '700' },
-  card: { alignItems: 'center', padding: 24, gap: 6, backgroundColor: palette.white, borderWidth: 1, borderColor: palette.line, borderRadius: 14 },
+  card: { alignItems: 'center', padding: 24, gap: 6, backgroundColor: palette.white, borderWidth: 1, borderColor: palette.line, borderRadius: 18 },
   avatar: { width: 58, height: 58, borderRadius: 29, backgroundColor: palette.goldLight, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
   avatarText: { color: palette.gold, fontSize: 24, fontWeight: '600' },
   name: { color: palette.ink, fontSize: 17, fontWeight: '700' },
   email: { color: palette.muted, fontSize: 13 },
   role: { marginTop: 3, color: palette.gold, fontSize: 12, fontWeight: '700' },
-  label: { marginTop: 10, marginBottom: 2, color: palette.muted, fontSize: 12, fontWeight: '700' },
+  sectionTitle: { marginTop: 6, color: palette.ink, fontSize: 16, fontWeight: '700' },
+  menu: { overflow: 'hidden', paddingHorizontal: 15, backgroundColor: palette.white, borderWidth: 1, borderColor: palette.line, borderRadius: 16 },
+  menuRow: { minHeight: 52, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1, borderBottomColor: palette.line },
+  menuText: { color: palette.ink, fontSize: 14, fontWeight: '600' },
+  chevron: { color: palette.muted, fontSize: 23 },
+  panel: { padding: 16, gap: 12, backgroundColor: palette.white, borderWidth: 1, borderColor: palette.line, borderRadius: 14 },
+  panelTitle: { color: palette.ink, fontSize: 14, fontWeight: '700' },
+  panelBody: { color: palette.muted, fontSize: 13, lineHeight: 19 },
   editForm: { gap: 12 },
   languages: { flexDirection: 'row', gap: 10 },
   language: { flex: 1, alignItems: 'center', paddingVertical: 12, paddingHorizontal: 10, borderWidth: 1, borderColor: palette.line, backgroundColor: palette.white, borderRadius: 10 },

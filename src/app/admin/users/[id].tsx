@@ -41,7 +41,9 @@ export default function AdminUserDetailsScreen() {
       setUser(await adminService.updateUserRole(user.id, role));
       notify(t('roleUpdated'));
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : t('unknownError'));
+      const message = requestError instanceof Error ? requestError.message : t('unknownError');
+      setError(message);
+      notify(message, 'error');
     } finally {
       setSaving(false);
     }
@@ -59,7 +61,9 @@ export default function AdminUserDetailsScreen() {
             notify(t('userDeleted'));
             router.replace('/admin/users');
           }).catch((reason: unknown) => {
-            setError(reason instanceof Error ? reason.message : t('deleteFailed'));
+            const message = reason instanceof Error ? reason.message : t('deleteFailed');
+            setError(message);
+            notify(message, 'error');
           });
         },
       },

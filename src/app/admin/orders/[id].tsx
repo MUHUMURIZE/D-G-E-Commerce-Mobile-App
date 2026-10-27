@@ -45,7 +45,9 @@ export default function AdminOrderDetailsScreen() {
       setOrder(await adminService.updateOrderStatus(order.id, status));
       notify(t('statusUpdated'));
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : t('unknownError'));
+      const message = requestError instanceof Error ? requestError.message : t('unknownError');
+      setError(message);
+      notify(message, 'error');
     } finally {
       setSaving(false);
     }

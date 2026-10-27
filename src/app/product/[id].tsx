@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Image, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { productService } from '@/api/productService';
@@ -82,7 +83,7 @@ export default function ProductDetailsScreen() {
       <Text style={styles.back} onPress={() => router.back()}>‹  {t('back')}</Text>
       {error ? <Message error>{error}</Message> : null}
       <View style={styles.productCard}>
-        <Image source={{ uri: resolveImageUrl(product.imageUrl) }} style={styles.image} />
+        <Image source={{ uri: resolveImageUrl(product.imageUrl) }} style={styles.image} contentFit="cover" />
         <View style={styles.productInfo}>
           <Text style={styles.category}>{t(product.category).toUpperCase()}</Text>
           <Text style={styles.name}>{product.name}</Text>

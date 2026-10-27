@@ -25,6 +25,23 @@ const cartSlice = createSlice({
         state.items.push({ product: action.payload, quantity: 1 });
       }
     },
+    addProductQuantity: (state, action: PayloadAction<{ product: Product; quantity: number }>) => {
+      const { product, quantity } = action.payload;
+      if (!Number.isInteger(quantity) || quantity <= 0) return;
+      const availableQuantity = getAvailableQuantity(product.availabilityStatus);
+      if (availableQuantity === 0) return;
+      const existing = state.items.find((item) => item.product.id === product.id);
+      const currentQuantity = existing?.quantity ?? 0;
+      const room = availableQuantity === undefined ? quantity : availableQuantity - currentQuantity;
+      const quantityToAdd = Math.min(quantity, room);
+      if (quantityToAdd <= 0) return;
+      if (existing) {
+        existing.quantity += quantityToAdd;
+        existing.product = product;
+      } else {
+        state.items.push({ product, quantity: quantityToAdd });
+      }
+    },
     setQuantity: (state, action: PayloadAction<{ productId: string; quantity: number }>) => {
       const item = state.items.find((entry) => entry.product.id === action.payload.productId);
       if (!item) return;
@@ -52,6 +69,7 @@ const cartSlice = createSlice({
 
 export const {
   addToCart,
+  addProductQuantity,
   setQuantity,
   removeFromCart,
   clearCart,

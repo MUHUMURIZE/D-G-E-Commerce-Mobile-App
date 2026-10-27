@@ -2,6 +2,7 @@ import { combineReducers, configureStore, createListenerMiddleware, isAnyOf } fr
 import authReducer from '@/redux/slices/authSlice';
 import productReducer from '@/redux/slices/productSlice';
 import cartReducer, {
+  addProductQuantity,
   addToCart,
   cartSyncCompleted,
   cartSyncFailed,
@@ -25,7 +26,7 @@ export type RootState = ReturnType<typeof rootReducer>;
 const cartSyncListener = createListenerMiddleware<RootState>();
 
 cartSyncListener.startListening({
-  matcher: isAnyOf(addToCart, setQuantity, removeFromCart, clearCart),
+  matcher: isAnyOf(addToCart, addProductQuantity, setQuantity, removeFromCart, clearCart),
   effect: async (action, listenerApi) => {
     listenerApi.cancelActiveListeners();
     await listenerApi.delay(250);

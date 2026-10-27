@@ -31,7 +31,9 @@ export default function RestockProductScreen() {
       notify(t('restockSuccess'));
       router.replace('/admin/products');
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : t('unknownError'));
+      const message = requestError instanceof Error ? requestError.message : t('unknownError');
+      setError(message);
+      notify(message, 'error');
     } finally {
       setSaving(false);
     }

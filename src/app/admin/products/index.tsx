@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, FlatList, Image, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { adminService, type AdminProduct } from '@/api/adminService';
@@ -7,12 +8,14 @@ import { AdminHeader, adminStyles } from '@/components/admin/admin-header';
 import { AppButton } from '@/components/ui/app-button';
 import { AppInput } from '@/components/ui/app-input';
 import { EmptyState, Message } from '@/components/ui/message';
+import { useNotifications } from '@/components/notification-center';
 import { palette } from '@/constants/palette';
 import { formatRwf } from '@/utils/formatCurrency';
 import { resolveImageUrl } from '@/utils/imageUrl';
 
 export default function AdminProductsScreen() {
   const { t } = useTranslation();
+  const { notify } = useNotifications();
   const [products, setProducts] = useState<AdminProduct[]>([]);
   const [search, setSearch] = useState('');
   const [stockFilter, setStockFilter] = useState<'all' | 'low' | 'out'>('all');
@@ -50,8 +53,13 @@ export default function AdminProductsScreen() {
         text: t('delete'),
         style: 'destructive',
         onPress: () => {
-          void adminService.deleteProduct(product.id).then(() => load()).catch((reason: unknown) => {
-            setError(reason instanceof Error ? reason.message : t('deleteFailed'));
+          void adminService.deleteProduct(product.id).then(() => {
+            notify(t('productDeleted'));
+            void load();
+          }).catch((reason: unknown) => {
+            const message = reason instanceof Error ? reason.message : t('deleteFailed');
+            setError(message);
+            notify(message, 'error');
           });
         },
       },
@@ -100,7 +108,7 @@ export default function AdminProductsScreen() {
       renderItem={({ item }) => (
         <View style={adminStyles.card}>
           <View style={adminStyles.row}>
-            <Image source={{ uri: resolveImageUrl(item.imageUrl) }} style={styles.image} />
+            <Image source={{ uri: resolveImageUrl(item.imageUrl) }} style={styles.image} contentFit="cover" />
             <View style={styles.info}>
               <Text style={styles.name}>{item.name}</Text>
               <Text style={adminStyles.muted}>{t(item.category)}</Text>

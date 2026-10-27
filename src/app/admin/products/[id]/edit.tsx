@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text } from 'react-native';
+import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -69,7 +70,9 @@ export default function EditAdminProductScreen() {
       notify(t('productSaved'));
       router.replace('/admin/products');
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : t('unknownError'));
+      const message = requestError instanceof Error ? requestError.message : t('unknownError');
+      setError(message);
+      notify(message, 'error');
     } finally {
       setSaving(false);
     }
@@ -102,7 +105,7 @@ export default function EditAdminProductScreen() {
       <AppInput label={t('stockQuantity')} defaultValue={String(product.stock)} onChangeText={(value) => setProduct({ ...product, stock: Number(value) })} keyboardType="number-pad" />
       <AppInput label={t('rating')} defaultValue={String(product.rating)} onChangeText={(value) => setProduct({ ...product, rating: Number(value) })} keyboardType="decimal-pad" />
       <Text style={styles.label}>{t('productImage')}</Text>
-      <Image source={{ uri: image?.uri ?? resolveImageUrl(product.imageUrl) }} style={styles.preview} />
+      <Image source={{ uri: image?.uri ?? resolveImageUrl(product.imageUrl) }} style={styles.preview} contentFit="cover" />
       <AppButton title={t('changeImage')} secondary onPress={() => { void chooseImage(); }} />
       <AppButton
         title={t('updateProduct')}
