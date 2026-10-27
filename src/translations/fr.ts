@@ -230,6 +230,11 @@ const fr = {
   loadProductsError: 'Impossible d’actualiser les produits. La collection disponible reste affichée.',
   cartStockChanged: 'Certaines quantités dépassent le stock actuel. Retirez les articles indisponibles ou ajustez les quantités.',
   trackingLoadError: 'Impossible de charger le suivi de la commande.',
+  showPassword: 'Afficher le mot de passe',
+  hidePassword: 'Masquer le mot de passe',
+  orderProductLookupError: 'Détails du produit indisponibles : {{error}}',
+  productId: 'Produit {{id}}',
+  each: 'l’unité',
 };
 
 export default fr;

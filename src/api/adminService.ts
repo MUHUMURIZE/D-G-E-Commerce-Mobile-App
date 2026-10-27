@@ -1,4 +1,5 @@
 import { apiClient } from '@/api/client';
+import { resolveImageUrl } from '@/utils/imageUrl';
 import type { OrderStatus, UserProfile } from '@/types';
 
 export interface AdminProduct {
@@ -46,20 +47,13 @@ export interface ProductInput {
   image?: { uri: string; name: string; type: string; file?: Blob };
 }
 
-function imageUrlFromApi(imageUrl: string): string {
-  if (!imageUrl.startsWith('/')) return imageUrl;
-  const apiBaseUrl = apiClient.defaults.baseURL ?? '';
-  const serverBaseUrl = apiBaseUrl.replace(/\/api\/?$/, '').replace(/\/$/, '');
-  return `${serverBaseUrl}${imageUrl}`;
-}
-
 function normalizeProduct(product: AdminProduct): AdminProduct {
   return {
     ...product,
     price: Number(product.price),
     rating: Number(product.rating),
     stock: Number(product.stock),
-    imageUrl: imageUrlFromApi(product.imageUrl),
+    imageUrl: resolveImageUrl(product.imageUrl) ?? '',
   };
 }
 

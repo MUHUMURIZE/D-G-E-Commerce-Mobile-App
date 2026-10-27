@@ -230,6 +230,11 @@ const rw = {
   loadProductsError: 'Ntibyashobotse kuvugurura ibicuruzwa. Ibihari biracyagaragara mu gihe wongeye kugerageza.',
   cartStockChanged: 'Umubare w’ibicuruzwa bimwe urenze ububiko buhari. Kuramo ibitaboneka cyangwa ugabanye umubare.',
   trackingLoadError: 'Ntibyashobotse kubona aho itumiza rigeze.',
+  showPassword: 'Erekana ijambo ry’ibanga',
+  hidePassword: 'Hisha ijambo ry’ibanga',
+  orderProductLookupError: 'Ibisobanuro ntibiboneka: {{error}}',
+  productId: 'Igicuruzwa {{id}}',
+  each: 'kimwe',
 };
 
 export default rw;

@@ -14,10 +14,10 @@ interface AppButtonProps {
 export function AppButton({ title, onPress, secondary, loading, disabled, variant = 'primary' }: AppButtonProps) {
   const isSecondary = secondary || variant === 'secondary';
   const gradientColors = variant === 'danger'
-    ? ['#EF4444', '#B91C1C'] as const
+    ? [palette.danger, '#B91C1C'] as const
     : variant === 'success'
-      ? ['#22C55E', '#15803D'] as const
-      : ['#3B82F6', '#1D4ED8'] as const;
+      ? [palette.success, '#15803D'] as const
+      : [palette.gold, '#1D4ED8'] as const;
   const content = loading
     ? <ActivityIndicator color={isSecondary ? palette.gold : palette.white} />
     : <Text style={[styles.label, isSecondary && styles.secondaryLabel]}>{title}</Text>;

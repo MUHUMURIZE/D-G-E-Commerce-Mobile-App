@@ -1,20 +1,23 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text } from 'react-native';
+import { ActivityIndicator, Image, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { orderService } from '@/api/orderService';
+import { productService } from '@/api/productService';
 import { AuthGate } from '@/components/auth-gate';
 import { OrderTimeline } from '@/components/order-timeline';
 import { Message } from '@/components/ui/message';
 import { palette } from '@/constants/palette';
 import { formatRwf } from '@/utils/formatCurrency';
 import { useAppSelector } from '@/redux/hooks';
-import type { Order } from '@/types';
+import { resolveImageUrl } from '@/utils/imageUrl';
+import type { Order, OrderLine, Product } from '@/types';
 
 function OrderDetailContent() {
   const { t } = useTranslation();
   const { id } = useLocalSearchParams<{ id: string }>();
   const existing = useAppSelector((state) => state.orders.items.find((order) => order.id === id));
+  const catalog = useAppSelector((state) => state.products.items);
   const [result, setResult] = useState<{ id: string; order?: Order; error?: string } | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -38,8 +41,24 @@ function OrderDetailContent() {
   const error = result?.id === id ? result.error : undefined;
   const loading = !existing && result?.id !== id;
 
-  if (loading) return <ActivityIndicator style={styles.loading} color={palette.gold} />;
-  if (error || !order) return <Message error>{error ?? t('orderNotFound')}</Message>;
+  if (loading || error || !order) {
+    return (
+      <ScrollView
+        style={styles.screen}
+        contentContainerStyle={styles.unavailable}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => { void loadOrder(); }}
+            tintColor={palette.gold}
+          />
+        }>
+        {loading ? <ActivityIndicator color={palette.gold} /> : null}
+        {error ? <Message error>{error}</Message> : null}
+        {!loading && !error ? <Message error>{t('orderNotFound')}</Message> : null}
+      </ScrollView>
+    );
+  }
 
   return (
     <ScrollView
@@ -59,9 +78,11 @@ function OrderDetailContent() {
       <OrderTimeline status={order.status} />
       <Text style={styles.heading}>{t('orderItems').toUpperCase()}</Text>
       {order.items.map((item) => (
-        <Text key={item.id} style={styles.item}>
-          {item.quantity} × {item.productId.slice(-8)} · {formatRwf(item.unitPrice * item.quantity)}
-        </Text>
+        <OrderLineCard
+          key={item.id}
+          item={item}
+          cachedProduct={catalog.find((product) => product.id === item.productId)}
+        />
       ))}
       <Text style={styles.total}>{t('total')}  {formatRwf(order.totalAmount)}</Text>
       <Text style={styles.heading}>{t('deliveryDetails').toUpperCase()}</Text>
@@ -71,20 +92,76 @@ function OrderDetailContent() {
   );
 }
 
+function OrderLineCard({ item, cachedProduct }: { item: OrderLine; cachedProduct?: Product }) {
+  const { t } = useTranslation();
+  const [product, setProduct] = useState<Product | null>(null);
+  const [lookupError, setLookupError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (cachedProduct) return;
+    let active = true;
+    void Promise.resolve()
+      .then(() => productService.getById(item.productId))
+      .then((result) => {
+        if (active) setProduct(result);
+      })
+      .catch((requestError: unknown) => {
+        if (active) {
+          setLookupError(requestError instanceof Error ? requestError.message : t('loadError'));
+        }
+      });
+    return () => { active = false; };
+  }, [cachedProduct, item.productId, t]);
+
+  const details = cachedProduct ?? product;
+  const imageUrl = resolveImageUrl(details?.imageUrl);
+
+  return (
+    <View style={styles.itemCard}>
+      {imageUrl ? (
+        <Image source={{ uri: imageUrl }} style={styles.itemImage} />
+      ) : (
+        <View style={styles.itemImagePlaceholder} />
+      )}
+      <View style={styles.itemDetails}>
+        <Text numberOfLines={2} style={styles.itemName}>
+          {details?.name ?? t('productId', { id: item.productId.slice(-8).toUpperCase() })}
+        </Text>
+        <Text style={styles.itemMeta}>
+          {t('quantity')}: {item.quantity} · {formatRwf(item.unitPrice)} {t('each')}
+        </Text>
+        {lookupError ? (
+          <Text style={styles.lookupError}>
+            {t('orderProductLookupError', { error: lookupError })}
+          </Text>
+        ) : null}
+      </View>
+      <Text style={styles.itemTotal}>{formatRwf(item.unitPrice * item.quantity)}</Text>
+    </View>
+  );
+}
+
 export default function OrderDetailScreen() {
   return <AuthGate><OrderDetailContent /></AuthGate>;
 }
 
 const styles = StyleSheet.create({
-  loading: { flex: 1 },
   screen: { flex: 1, backgroundColor: palette.paper },
   content: { padding: 20, paddingBottom: 36 },
+  unavailable: { flexGrow: 1, justifyContent: 'center', padding: 20 },
   back: { marginVertical: 10, color: palette.muted, fontSize: 10, letterSpacing: 1 },
   eyebrow: { marginTop: 12, color: palette.gold, fontSize: 10, letterSpacing: 2 },
   title: { marginTop: 8, color: palette.ink, fontSize: 27, fontWeight: '600' },
   date: { marginTop: 5, color: palette.muted, fontSize: 12 },
   heading: { color: palette.muted, fontSize: 10, letterSpacing: 1.4, marginTop: 22, marginBottom: 10 },
-  item: { color: palette.ink, fontSize: 13, lineHeight: 22 },
+  itemCard: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, marginBottom: 10, borderRadius: 14, backgroundColor: palette.white, borderWidth: 1, borderColor: palette.line },
+  itemImage: { width: 58, height: 66, borderRadius: 9, backgroundColor: palette.goldLight },
+  itemImagePlaceholder: { width: 58, height: 66, borderRadius: 9, backgroundColor: palette.goldLight },
+  itemDetails: { flex: 1, gap: 4 },
+  itemName: { color: palette.ink, fontSize: 13, fontWeight: '700' },
+  itemMeta: { color: palette.muted, fontSize: 11 },
+  itemTotal: { color: palette.ink, fontSize: 12, fontWeight: '700' },
+  lookupError: { color: palette.danger, fontSize: 11 },
   total: { color: palette.ink, fontWeight: '700', marginTop: 14, fontSize: 15 },
   address: { color: palette.ink, lineHeight: 22, fontSize: 13 },
   track: { color: palette.gold, marginTop: 24, textDecorationLine: 'underline' },

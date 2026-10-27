@@ -6,6 +6,7 @@ import { productService } from '@/api/productService';
 import { AppButton } from '@/components/ui/app-button';
 import { EmptyState, Message } from '@/components/ui/message';
 import { palette } from '@/constants/palette';
+import { resolveImageUrl } from '@/utils/imageUrl';
 import { formatRwf } from '@/utils/formatCurrency';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { addToCart } from '@/redux/slices/cartSlice';
@@ -46,11 +47,25 @@ export default function ProductDetailsScreen() {
       ? t('onlyLeft', { count: product.availabilityStatus.match(/\d+/)?.[0] })
       : t('inStock');
 
-  if (loading) return <ActivityIndicator style={styles.loading} color={palette.gold} />;
   if (!product) {
-    return error
-      ? <Message error>{error}</Message>
-      : <EmptyState title={t('productUnavailable')} body={t('productUnavailableBody')} />;
+    return (
+      <ScrollView
+        style={styles.screen}
+        contentContainerStyle={styles.unavailable}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => { void loadProduct(); }}
+            tintColor={palette.gold}
+          />
+        }>
+        {loading ? <ActivityIndicator color={palette.gold} /> : null}
+        {error ? <Message error>{error}</Message> : null}
+        {!loading && !error ? (
+          <EmptyState title={t('productUnavailable')} body={t('productUnavailableBody')} />
+        ) : null}
+      </ScrollView>
+    );
   }
 
   return (
@@ -67,7 +82,7 @@ export default function ProductDetailsScreen() {
       <Text style={styles.back} onPress={() => router.back()}>‹  {t('back')}</Text>
       {error ? <Message error>{error}</Message> : null}
       <View style={styles.productCard}>
-        <Image source={{ uri: product.imageUrl }} style={styles.image} />
+        <Image source={{ uri: resolveImageUrl(product.imageUrl) }} style={styles.image} />
         <View style={styles.productInfo}>
           <Text style={styles.category}>{t(product.category).toUpperCase()}</Text>
           <Text style={styles.name}>{product.name}</Text>
@@ -95,6 +110,7 @@ const styles = StyleSheet.create({
   loading: { flex: 1 },
   screen: { flex: 1, backgroundColor: palette.paper },
   content: { paddingHorizontal: 16, paddingBottom: 36 },
+  unavailable: { flexGrow: 1, justifyContent: 'center', padding: 20 },
   back: { marginVertical: 10, color: palette.muted, fontSize: 10, letterSpacing: 1 },
   productCard: { overflow: 'hidden', borderRadius: 22, backgroundColor: palette.white, borderWidth: 1, borderColor: palette.line, shadowColor: palette.shadow, shadowOpacity: 0.07, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 3 },
   image: { width: '100%', aspectRatio: 0.95, backgroundColor: palette.goldLight },

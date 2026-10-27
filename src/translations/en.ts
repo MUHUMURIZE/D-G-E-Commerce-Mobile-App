@@ -230,6 +230,11 @@ const en = {
   loadProductsError: 'Products could not be refreshed. Showing the available collection while you retry.',
   cartStockChanged: 'Some cart quantities exceed current stock. Remove unavailable items or adjust their quantities.',
   trackingLoadError: 'Tracking information could not be loaded.',
+  showPassword: 'Show password',
+  hidePassword: 'Hide password',
+  orderProductLookupError: 'Product details unavailable: {{error}}',
+  productId: 'Product {{id}}',
+  each: 'each',
 };
 
 export default en;

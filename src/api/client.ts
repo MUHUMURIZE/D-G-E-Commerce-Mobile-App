@@ -1,5 +1,6 @@
 import axios, { AxiosError } from 'axios';
 import { readSession, clearSession } from '@/services/sessionStorage';
+import { API_BASE_URL } from '@/config/api';
 
 let unauthorizedHandler: (() => void) | undefined;
 const createAxiosClient = axios.create.bind(axios);
@@ -9,12 +10,15 @@ export function setUnauthorizedHandler(handler: () => void): void {
 }
 
 export const apiClient = createAxiosClient({
-  baseURL: process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api',
+  baseURL: API_BASE_URL || undefined,
   timeout: 15000,
   headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
 });
 
 apiClient.interceptors.request.use(async (config) => {
+  if (!API_BASE_URL) {
+    throw new Error('API is not configured. Set EXPO_PUBLIC_API_URL in the project .env file.');
+  }
   const session = await readSession();
   if (session?.token) config.headers.Authorization = `Bearer ${session.token}`;
   return config;

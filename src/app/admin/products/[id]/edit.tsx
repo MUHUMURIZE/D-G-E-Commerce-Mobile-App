@@ -10,6 +10,7 @@ import { AppInput } from '@/components/ui/app-input';
 import { Message } from '@/components/ui/message';
 import { useNotifications } from '@/components/notification-center';
 import { palette } from '@/constants/palette';
+import { resolveImageUrl } from '@/utils/imageUrl';
 
 const categories = ['Clothes', 'Shoes', 'Bags', 'Jewellery', 'Cosmetics', 'Household Equipment'];
 
@@ -101,7 +102,7 @@ export default function EditAdminProductScreen() {
       <AppInput label={t('stockQuantity')} defaultValue={String(product.stock)} onChangeText={(value) => setProduct({ ...product, stock: Number(value) })} keyboardType="number-pad" />
       <AppInput label={t('rating')} defaultValue={String(product.rating)} onChangeText={(value) => setProduct({ ...product, rating: Number(value) })} keyboardType="decimal-pad" />
       <Text style={styles.label}>{t('productImage')}</Text>
-      <Image source={{ uri: image?.uri ?? product.imageUrl }} style={styles.preview} />
+      <Image source={{ uri: image?.uri ?? resolveImageUrl(product.imageUrl) }} style={styles.preview} />
       <AppButton title={t('changeImage')} secondary onPress={() => { void chooseImage(); }} />
       <AppButton
         title={t('updateProduct')}

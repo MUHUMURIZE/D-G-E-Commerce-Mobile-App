@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { adminService, type AdminUser } from '@/api/adminService';
@@ -45,7 +45,14 @@ export default function AdminUsersScreen() {
           <AppInput label={t('searchUsers')} value={search} onChangeText={setSearch} />
         </View>
       }
-      ListEmptyComponent={!loading ? <EmptyState title={t('noUsers')} body={t('refreshError')} /> : undefined}
+      ListEmptyComponent={
+        loading
+          ? <ActivityIndicator style={styles.loading} color={palette.gold} />
+          : <EmptyState
+            title={error ? t('errorTitle') : t('noUsers')}
+            body={error ?? t('refreshError')}
+          />
+      }
       renderItem={({ item }) => (
         <Pressable onPress={() => router.push({ pathname: '/admin/users/[id]', params: { id: item.id } })} style={adminStyles.card}>
           <View style={adminStyles.row}>
@@ -64,6 +71,7 @@ export default function AdminUsersScreen() {
 
 const styles = StyleSheet.create({
   header: { gap: 12 },
+  loading: { marginTop: 24 },
   avatar: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: palette.goldLight },
   avatarText: { color: palette.gold, fontWeight: '800', fontSize: 18 },
   details: { flex: 1, gap: 3 },

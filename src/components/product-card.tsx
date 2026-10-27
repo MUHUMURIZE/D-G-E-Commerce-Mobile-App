@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { palette } from '@/constants/palette';
 import { formatRwf } from '@/utils/formatCurrency';
+import { resolveImageUrl } from '@/utils/imageUrl';
 import type { Product } from '@/types';
 
 export function ProductCard({ product }: { product: Product }) {
@@ -19,7 +20,7 @@ export function ProductCard({ product }: { product: Product }) {
       onPress={() => router.push({ pathname: '/product/[id]', params: { id: product.id } })}
       style={({ pressed }) => [styles.card, pressed && styles.pressed]}>
       <View style={styles.imageWrap}>
-        <Image source={{ uri: product.imageUrl }} style={styles.image} />
+        <Image source={{ uri: resolveImageUrl(product.imageUrl) }} style={styles.image} />
         {product.availabilityStatus === 'Out Of Stock' ? (
           <View style={styles.outBadge}><Text style={styles.outBadgeText}>{t('outOfStock')}</Text></View>
         ) : null}

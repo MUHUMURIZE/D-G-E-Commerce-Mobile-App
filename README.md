@@ -16,7 +16,7 @@ npm install
 Copy-Item .env.example .env
 ```
 
-Set `EXPO_PUBLIC_API_URL` in `.env` to the root URL of the backend API, for example `https://api.example.rw/api`. For a local backend on a physical phone, use your development computer's LAN IP; Android emulators commonly reach the host through `10.0.2.2`. Do not put private keys or server secrets in an `EXPO_PUBLIC_` variable; these values are bundled into the client.
+Set `EXPO_PUBLIC_API_URL` to the backend API URL and `EXPO_PUBLIC_SERVER_URL` to the backend origin used to load uploaded images. The sample values target this development machine at `172.23.71.218:3000`; update them if the machine IP or backend port changes. A physical phone running Expo Go must use the computer's LAN IP (not `localhost`) and be able to reach the backend over the same network. Confirm the backend listens on the LAN interface and that the firewall allows its port. Android emulators commonly reach the host through `10.0.2.2`. Restart Expo after changing `.env`. Do not put private keys or server secrets in an `EXPO_PUBLIC_` variable; these values are bundled into the client.
 
 ```powershell
 npx expo start
@@ -62,6 +62,8 @@ src/
 
 ## API integration
 
+The local `.env.example` contains both public endpoints for Expo Go on the current development network. Copy it to `.env` and update the LAN host or port when needed. `src/config/api.ts` is the single source for the API base URL and media server URL; the application does not fall back to `localhost`.
+
 The base URL is `EXPO_PUBLIC_API_URL`; the client uses a 15-second timeout and adds a stored JWT as a Bearer token. A 401 clears the saved session and dispatches logout. Network errors, timeouts, and server errors are surfaced to the screens.
 
 The app reuses its existing typed `authService`, `productService`, `cartService`, `orderService`, and `adminService` modules. The app expects these endpoints and response shapes:
@@ -71,7 +73,7 @@ The app reuses its existing typed `authService`, `productService`, `cartService`
 | `POST` | `/auth/login` | `{ "user": { "id": "...", "name": "...", "email": "..." }, "token": "..." }` |
 | `POST` | `/auth/register` | Same session response |
 | `POST` | `/auth/forgot-password` | Success response; body `{ "email": "..." }` |
-| `GET` | `/products` | `Product[]`; accepts `search`, `category`, `minPrice`, `maxPrice` query parameters |
+| `GET` | `/products` | `Product[]` (the client also accepts a paginated `{ "items": Product[] }` response); accepts `search`, `category`, `minPrice`, `maxPrice` query parameters |
 | `GET` | `/products/:id` | One `Product` |
 | `PUT` | `/cart` | Accepts `{ "items": CartItem[] }` |
 | `DELETE` | `/cart` | Clears the server cart |

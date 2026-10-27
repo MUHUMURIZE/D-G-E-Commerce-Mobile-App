@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { adminService, type AdminOrder } from '@/api/adminService';
@@ -47,7 +47,14 @@ export default function AdminOrdersScreen() {
           <AppInput label={t('searchOrders')} value={search} onChangeText={setSearch} />
         </View>
       }
-      ListEmptyComponent={!loading ? <EmptyState title={t('noAdminOrders')} body={t('refreshError')} /> : undefined}
+      ListEmptyComponent={
+        loading
+          ? <ActivityIndicator style={styles.loading} color={palette.gold} />
+          : <EmptyState
+            title={error ? t('errorTitle') : t('noAdminOrders')}
+            body={error ?? t('refreshError')}
+          />
+      }
       renderItem={({ item }) => (
         <Pressable onPress={() => router.push({ pathname: '/admin/orders/[id]', params: { id: item.id } })} style={adminStyles.card}>
           <View style={adminStyles.row}>
@@ -64,6 +71,7 @@ export default function AdminOrdersScreen() {
 
 const styles = StyleSheet.create({
   header: { gap: 12 },
+  loading: { marginTop: 24 },
   orderId: { color: palette.ink, fontWeight: '700', fontSize: 14 },
   status: { color: palette.gold, fontSize: 12, fontWeight: '700' },
   customer: { color: palette.muted, fontSize: 13, marginTop: 8 },

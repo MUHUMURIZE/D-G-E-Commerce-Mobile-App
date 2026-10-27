@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, FlatList, Image, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, Image, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { adminService, type AdminProduct } from '@/api/adminService';
@@ -9,6 +9,7 @@ import { AppInput } from '@/components/ui/app-input';
 import { EmptyState, Message } from '@/components/ui/message';
 import { palette } from '@/constants/palette';
 import { formatRwf } from '@/utils/formatCurrency';
+import { resolveImageUrl } from '@/utils/imageUrl';
 
 export default function AdminProductsScreen() {
   const { t } = useTranslation();
@@ -88,11 +89,18 @@ export default function AdminProductsScreen() {
           <AppButton title={t('createProduct')} onPress={() => router.push('/admin/products/new')} />
         </View>
       }
-      ListEmptyComponent={!loading ? <EmptyState title={t('noProducts')} body={t('refreshError')} /> : undefined}
+      ListEmptyComponent={
+        loading
+          ? <ActivityIndicator style={styles.loading} color={palette.gold} />
+          : <EmptyState
+            title={error ? t('errorTitle') : t('noProducts')}
+            body={error ?? t('refreshError')}
+          />
+      }
       renderItem={({ item }) => (
         <View style={adminStyles.card}>
           <View style={adminStyles.row}>
-            <Image source={{ uri: item.imageUrl }} style={styles.image} />
+            <Image source={{ uri: resolveImageUrl(item.imageUrl) }} style={styles.image} />
             <View style={styles.info}>
               <Text style={styles.name}>{item.name}</Text>
               <Text style={adminStyles.muted}>{t(item.category)}</Text>
@@ -115,6 +123,7 @@ export default function AdminProductsScreen() {
 
 const styles = StyleSheet.create({
   header: { gap: 12, marginBottom: 4 },
+  loading: { marginTop: 24 },
   filters: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   filter: { paddingHorizontal: 12, paddingVertical: 9, borderRadius: 18, backgroundColor: palette.white },
   selectedFilter: { backgroundColor: palette.gold },

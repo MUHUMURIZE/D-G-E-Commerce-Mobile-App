@@ -5,6 +5,7 @@ import { AppButton } from '@/components/ui/app-button';
 import { EmptyState } from '@/components/ui/message';
 import { palette } from '@/constants/palette';
 import { formatRwf } from '@/utils/formatCurrency';
+import { resolveImageUrl } from '@/utils/imageUrl';
 import { exceedsAvailableQuantity, getAvailableQuantity } from '@/utils/inventory';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { clearCart, removeFromCart, selectCartTotal, setQuantity } from '@/redux/slices/cartSlice';
@@ -43,7 +44,7 @@ export default function CartScreen() {
               || (availableQuantity !== undefined && quantity >= availableQuantity);
             return (
               <View key={product.id} style={styles.item}>
-                <Image source={{ uri: product.imageUrl }} style={styles.image} />
+                <Image source={{ uri: resolveImageUrl(product.imageUrl) }} style={styles.image} />
                 <View style={styles.details}>
                   <Text style={styles.category}>{t(product.category).toUpperCase()}</Text>
                   <Text style={styles.name}>{product.name}</Text>
