@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { orderService } from '@/api/orderService';
@@ -15,29 +15,39 @@ function TrackingContent() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const existing = useAppSelector((state) => state.orders.items.find((item) => item.id === id));
   const [result, setResult] = useState<{ id: string; order?: Order; error?: string } | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadOrder = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      const order = await orderService.getById(id);
+      setResult({ id, order });
+    } catch (requestError: unknown) {
+      setResult({ id, error: requestError instanceof Error ? requestError.message : t('trackingLoadError') });
+    } finally {
+      setRefreshing(false);
+    }
+  }, [id, t]);
 
   useEffect(() => {
-    if (existing) return;
-    let active = true;
-    orderService.getById(id).then((order) => {
-      if (active) setResult({ id, order });
-    }).catch((requestError: unknown) => {
-      if (active) {
-        setResult({
-          id,
-          error: requestError instanceof Error ? requestError.message : 'Tracking information could not be loaded.',
-        });
-      }
-    });
-    return () => { active = false; };
-  }, [existing, id]);
+    if (!existing) void Promise.resolve().then(loadOrder);
+  }, [existing, loadOrder]);
 
   const order = existing ?? (result?.id === id ? result.order : undefined);
   const error = result?.id === id ? result.error : undefined;
   const loading = !existing && result?.id !== id;
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+    <ScrollView
+      style={styles.screen}
+      contentContainerStyle={styles.content}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={() => { void loadOrder(); }}
+          tintColor={palette.gold}
+        />
+      }>
       <Text style={styles.eyebrow}>{t('orderTracking')}</Text>
       <Text style={styles.title}>{t('trackYourOrder')}</Text>
       <Text style={styles.order}>{t('orderId', { id: id?.slice(-8).toUpperCase() })}</Text>
@@ -46,7 +56,7 @@ function TrackingContent() {
       ) : loading ? (
         <ActivityIndicator style={styles.loading} color={palette.gold} />
       ) : (
-        <Message error>{error ?? 'Tracking information could not be loaded.'}</Message>
+        <Message error>{error ?? t('trackingLoadError')}</Message>
       )}
     </ScrollView>
   );

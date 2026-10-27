@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { orderService } from '@/api/orderService';
@@ -16,22 +16,23 @@ function OrderDetailContent() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const existing = useAppSelector((state) => state.orders.items.find((order) => order.id === id));
   const [result, setResult] = useState<{ id: string; order?: Order; error?: string } | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadOrder = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      const order = await orderService.getById(id);
+      setResult({ id, order });
+    } catch (requestError: unknown) {
+      setResult({ id, error: requestError instanceof Error ? requestError.message : t('loadError') });
+    } finally {
+      setRefreshing(false);
+    }
+  }, [id, t]);
 
   useEffect(() => {
-    if (existing) return;
-    let active = true;
-    orderService.getById(id).then((result) => {
-      if (active) setResult({ id, order: result });
-    }).catch((requestError: unknown) => {
-      if (active) {
-        setResult({
-          id,
-          error: requestError instanceof Error ? requestError.message : 'Order could not be loaded.',
-        });
-      }
-    });
-    return () => { active = false; };
-  }, [existing, id]);
+    if (!existing) void Promise.resolve().then(loadOrder);
+  }, [existing, loadOrder]);
 
   const order = existing ?? (result?.id === id ? result.order : undefined);
   const error = result?.id === id ? result.error : undefined;
@@ -41,7 +42,16 @@ function OrderDetailContent() {
   if (error || !order) return <Message error>{error ?? t('orderNotFound')}</Message>;
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+    <ScrollView
+      style={styles.screen}
+      contentContainerStyle={styles.content}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={() => { void loadOrder(); }}
+          tintColor={palette.gold}
+        />
+      }>
       <Text onPress={() => router.back()} style={styles.back}>‹  {t('back')}</Text>
       <Text style={styles.eyebrow}>{t('orderId', { id: order.id.slice(-8).toUpperCase() })}</Text>
       <Text style={styles.title}>{t('orderDetails')}</Text>

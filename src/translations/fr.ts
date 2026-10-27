@@ -229,6 +229,7 @@ const fr = {
   kigaliRwanda: 'KIGALI · RWANDA',
   loadProductsError: 'Impossible d’actualiser les produits. La collection disponible reste affichée.',
   cartStockChanged: 'Certaines quantités dépassent le stock actuel. Retirez les articles indisponibles ou ajustez les quantités.',
+  trackingLoadError: 'Impossible de charger le suivi de la commande.',
 };
 
 export default fr;

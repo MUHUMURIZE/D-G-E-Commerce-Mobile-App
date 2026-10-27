@@ -4,7 +4,7 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { AppInput } from '@/components/ui/app-input';
-import { Message } from '@/components/ui/message';
+import { EmptyState, Message } from '@/components/ui/message';
 import { ProductGridSkeleton } from '@/components/ui/loading-skeleton';
 import { ProductCard } from '@/components/product-card';
 import { palette } from '@/constants/palette';
@@ -88,7 +88,11 @@ export default function HomeScreen() {
         </View>
       }
       ListEmptyComponent={
-        loading ? <ProductGridSkeleton /> : <Text style={styles.empty}>{t('noMatchingProducts')}</Text>
+        loading
+          ? <ProductGridSkeleton />
+          : error
+            ? <EmptyState title={t('errorTitle')} body={t('loadProductsError')} />
+            : <Text style={styles.empty}>{t('noMatchingProducts')}</Text>
       }
       ListFooterComponent={
         items.length ? (

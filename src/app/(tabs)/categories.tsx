@@ -1,9 +1,11 @@
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect } from 'react';
+import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { ProductCard } from '@/components/product-card';
+import { EmptyState, Message } from '@/components/ui/message';
 import { palette } from '@/constants/palette';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
-import { setFilters } from '@/redux/slices/productSlice';
+import { refreshProducts, setFilters } from '@/redux/slices/productSlice';
 
 const priceRanges = [
   { key: 'anyPrice', min: undefined, max: undefined },
@@ -15,12 +17,22 @@ const priceRanges = [
 export default function CategoriesScreen() {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
-  const { items, filters } = useAppSelector((state) => state.products);
+  const { items, filters, loading, error } = useAppSelector((state) => state.products);
+  useEffect(() => { void dispatch(refreshProducts({})); }, [dispatch]);
   const categories = Array.from(new Set(items.map((item) => item.category)));
   const selectedPrice = priceRanges.findIndex((range) => range.min === filters.minPrice && range.max === filters.maxPrice);
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+    <ScrollView
+      style={styles.screen}
+      contentContainerStyle={styles.content}
+      refreshControl={
+        <RefreshControl
+          refreshing={loading}
+          onRefresh={() => { void dispatch(refreshProducts({})); }}
+          tintColor={palette.gold}
+        />
+      }>
       <Text style={styles.eyebrow}>{t('featuredCollection')}</Text>
       <Text style={styles.title}>{t('browseByCategory')}</Text>
       <View style={styles.options}>
@@ -56,6 +68,11 @@ export default function CategoriesScreen() {
         ))}
       </View>
       <Text style={styles.subTitle}>{t('productsCount', { count: items.length }).toUpperCase()}</Text>
+      {error ? <Message error>{error}</Message> : null}
+      {loading && !items.length ? <ActivityIndicator color={palette.gold} /> : null}
+      {!loading && !items.length ? (
+        <EmptyState title={t('noProducts')} body={t('loadProductsError')} />
+      ) : null}
       <View style={styles.grid}>
         {items.filter((product) =>
           (!filters.category || product.category === filters.category)

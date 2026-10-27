@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, Image, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { productService } from '@/api/productService';
@@ -16,22 +16,26 @@ export default function ProductDetailsScreen() {
   const existing = useAppSelector((state) => state.products.items.find((item) => item.id === id));
   const dispatch = useAppDispatch();
   const [result, setResult] = useState<{ id: string; product?: typeof existing; error?: string } | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadProduct = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      const product = await productService.getById(id);
+      setResult({ id, product });
+    } catch (requestError: unknown) {
+      setResult({
+        id,
+        error: requestError instanceof Error ? requestError.message : t('loadError'),
+      });
+    } finally {
+      setRefreshing(false);
+    }
+  }, [id, t]);
 
   useEffect(() => {
-    if (existing) return;
-    let active = true;
-    productService.getById(id).then((product) => {
-      if (active) setResult({ id, product });
-    }).catch((requestError: unknown) => {
-      if (active) {
-        setResult({
-          id,
-          error: requestError instanceof Error ? requestError.message : 'Product could not be loaded.',
-        });
-      }
-    });
-    return () => { active = false; };
-  }, [existing, id]);
+    if (!existing) void Promise.resolve().then(loadProduct);
+  }, [existing, loadProduct]);
 
   const product = existing ?? (result?.id === id ? result.product : undefined);
   const error = result?.id === id ? result.error : undefined;
@@ -50,8 +54,18 @@ export default function ProductDetailsScreen() {
   }
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+    <ScrollView
+      style={styles.screen}
+      contentContainerStyle={styles.content}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={() => { void loadProduct(); }}
+          tintColor={palette.gold}
+        />
+      }>
       <Text style={styles.back} onPress={() => router.back()}>‹  {t('back')}</Text>
+      {error ? <Message error>{error}</Message> : null}
       <View style={styles.productCard}>
         <Image source={{ uri: product.imageUrl }} style={styles.image} />
         <View style={styles.productInfo}>

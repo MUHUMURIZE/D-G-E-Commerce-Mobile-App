@@ -1,6 +1,6 @@
 # D&G E-Commerce Mobile App
 
-A cross-platform Expo, React Native, and TypeScript storefront for D&G in Rwanda. It includes a browsable demo collection, search and category/price filters, a Redux-managed cart, account and checkout flows, order tracking, and English/Kinyarwanda localization.
+A cross-platform Expo, React Native, and TypeScript storefront for D&G in Rwanda. It loads its catalog and account data from the configured backend and includes search and category/price filters, a backend-synchronized cart, checkout, order tracking, an admin console, and English, Kinyarwanda, and French localization.
 
 ## Requirements
 
@@ -34,7 +34,7 @@ Use `npx expo start --android`, `npx expo start --ios`, or `npx expo start --web
 | `axios` | REST client and request/response interceptors |
 | `@react-native-async-storage/async-storage` | Persisted session and language preference |
 | `formik`, `yup` | Form state and validation |
-| `i18next`, `react-i18next` | English and Kinyarwanda localization |
+| `i18next`, `react-i18next` | English, Kinyarwanda, and French localization |
 | `expo-image`, `expo-status-bar` | Image and status bar support |
 
 ## Project structure
@@ -43,15 +43,19 @@ Use `npx expo start --android`, `npx expo start --ios`, or `npx expo start --web
 src/
 ├── api/                 # Axios client and typed auth/product/cart/order services
 ├── app/                 # Expo Router screens and tab layout
-│   ├── (tabs)/          # Home, categories, bag, orders, profile
+│   ├── (tabs)/          # Authenticated customer home, categories, cart, orders, profile
+│   ├── admin/           # Role-protected dashboard, product, user, and order management
+│   ├── login.tsx
+│   ├── register.tsx
+│   ├── checkout.tsx
 │   ├── product/[id].tsx
 │   ├── order/[id].tsx
 │   └── tracking/[id].tsx
-├── components/          # Product card, auth gate, order timeline, UI primitives
-├── constants/           # Theme, colors, and local demonstration products
+├── components/          # Product card, auth gates, order timeline, and UI primitives
+├── constants/           # Theme and color tokens
 ├── redux/               # Store, typed hooks, and auth/product/cart/order slices
 ├── services/            # AsyncStorage session persistence
-├── translations/        # English and Kinyarwanda resources
+├── translations/        # English, Kinyarwanda, and French resources
 ├── utils/               # RWF formatting
 └── types/               # Shared domain and CSS module types
 ```
@@ -60,7 +64,7 @@ src/
 
 The base URL is `EXPO_PUBLIC_API_URL`; the client uses a 15-second timeout and adds a stored JWT as a Bearer token. A 401 clears the saved session and dispatches logout. Network errors, timeouts, and server errors are surfaced to the screens.
 
-The app expects these endpoints and response shapes:
+The app reuses its existing typed `authService`, `productService`, `cartService`, `orderService`, and `adminService` modules. The app expects these endpoints and response shapes:
 
 | Method | Endpoint | Expected response |
 | --- | --- | --- |
@@ -75,13 +79,13 @@ The app expects these endpoints and response shapes:
 | `GET` | `/orders` | `Order[]` for the authenticated customer |
 | `GET` | `/orders/:id` | One authorized `Order` |
 
-Product, order, address, payment, and session fields are defined in `src/types/index.ts`. The catalog is seeded with clearly local demonstration products so the storefront is browsable before a backend is configured; refresh reports API failures rather than disguising them. Authentication and placing orders require the configured service.
+Product, order, address, payment, and session fields are defined in `src/types/index.ts`. The catalog starts empty and is populated only from the backend; API failures are surfaced rather than replaced with demonstration data. Authentication, cart synchronization, and placing orders require the configured service.
 
 ## State management
 
 - `authSlice`: session restore, registration, login, logout, and visible errors. JWT sessions are stored in AsyncStorage.
 - `productSlice`: catalog, refresh loading/error, and shared category/price filters.
-- `cartSlice`: quantities, stock limits, removal, clearing, item count, and subtotal selectors.
+- `cartSlice`: quantities, stock limits, removal, clearing, backend synchronization state, item count, and subtotal selectors.
 - `orderSlice`: authenticated order history and order placement states.
 
 Components use typed `useAppDispatch` and `useAppSelector` hooks. Order totals and final prices must be recalculated and validated by the backend; client values are presentation-only.
@@ -90,9 +94,19 @@ Components use typed `useAppDispatch` and `useAppSelector` hooks. Order totals a
 
 ```mermaid
 flowchart TD
-  Storefront --> Home
-  Storefront --> Categories
-  Storefront --> ProductDetails
+  Start --> RestoreSession
+  RestoreSession -->|No session| Login
+  Login --> Register
+  Register -->|Success| RoleRedirect
+  Login -->|Success| RoleRedirect
+  RestoreSession -->|Admin session| AdminDashboard
+  RestoreSession -->|Customer session| CustomerHome
+  RoleRedirect -->|Admin| AdminDashboard
+  RoleRedirect -->|Customer| CustomerHome
+  AdminDashboard --> AdminScreens
+  AdminDashboard --> CustomerHome
+  CustomerHome --> Categories
+  CustomerHome --> ProductDetails
   ProductDetails --> Cart
   Cart --> Checkout
   Checkout --> Confirmation
@@ -100,13 +114,10 @@ flowchart TD
   OrderDetails --> Tracking
   OrdersTab --> OrderDetails
   ProfileTab --> SignOut
-  ProtectedScreens --> Login
-  Login --> ProtectedScreens
-  Login --> Register
-  Login --> ForgotPassword
+  Customer -->|/admin request| CustomerHome
 ```
 
-Expo Router is the navigation implementation (its native tabs are backed by React Navigation). Home/catalog browsing and the bag are guest-accessible; checkout, order history, tracking, and profile require a restored JWT session.
+Expo Router protects all application routes until a JWT session has been restored. Before sign-in, only login and registration are available. Admins can use both admin and customer routes; customer requests to `/admin` (including admin users, orders, and products) redirect to the customer tabs.
 
 ## Quality checks and testing
 

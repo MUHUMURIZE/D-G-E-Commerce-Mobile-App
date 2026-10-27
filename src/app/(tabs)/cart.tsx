@@ -1,4 +1,4 @@
-import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { AppButton } from '@/components/ui/app-button';
@@ -12,7 +12,7 @@ import { clearCart, removeFromCart, selectCartTotal, setQuantity } from '@/redux
 export default function CartScreen() {
   const dispatch = useAppDispatch();
   const { t } = useTranslation();
-  const items = useAppSelector((state) => state.cart.items);
+  const { items, syncing, syncError } = useAppSelector((state) => state.cart);
   const subtotal = selectCartTotal(items);
   const delivery = items.length === 0 || subtotal >= 200000 ? 0 : 5000;
   const hasUnavailableItems = items.some(({ product, quantity }) =>
@@ -25,6 +25,8 @@ export default function CartScreen() {
         <Text style={styles.title}>{t('cart')}</Text>
         {items.length ? <Text onPress={() => dispatch(clearCart())} style={styles.clear}>{t('clearCart')}</Text> : null}
       </View>
+      {syncError ? <Text accessibilityRole="alert" style={styles.syncError}>{syncError}</Text> : null}
+      {syncing ? <ActivityIndicator accessibilityLabel={t('loading')} color={palette.gold} /> : null}
       {!items.length ? (
         <EmptyState title={t('emptyCart')} body={t('emptyCartBody')} />
       ) : (
@@ -117,4 +119,5 @@ const styles = StyleSheet.create({
   bold: { color: palette.ink, fontWeight: '700' },
   divider: { height: 1, backgroundColor: palette.line },
   deliveryNote: { color: palette.muted, fontSize: 12, textAlign: 'center', marginTop: 12 },
+  syncError: { color: palette.danger, fontSize: 13, marginBottom: 8 },
 });

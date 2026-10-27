@@ -34,7 +34,7 @@ function OrdersContent() {
           onPress={() => router.push({ pathname: '/order/[id]', params: { id: order.id } })}
           style={styles.card}>
           <View style={styles.orderLine}>
-            <Text style={styles.orderId}>ORDER {order.id.slice(-8).toUpperCase()}</Text>
+            <Text style={styles.orderId}>{t('orderId', { id: order.id.slice(-8).toUpperCase() })}</Text>
             <Text style={styles.status}>{t(order.status.toLowerCase()).toUpperCase()}</Text>
           </View>
           <Text style={styles.date}>{new Date(order.created_at).toLocaleDateString()}</Text>

@@ -16,7 +16,7 @@ export default function AdminProductsScreen() {
   const [search, setSearch] = useState('');
   const [stockFilter, setStockFilter] = useState<'all' | 'low' | 'out'>('all');
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);

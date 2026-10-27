@@ -14,7 +14,7 @@ export default function AdminOrdersScreen() {
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [search, setSearch] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);

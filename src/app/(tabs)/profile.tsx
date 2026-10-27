@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
@@ -25,8 +25,11 @@ function ProfileContent() {
   const [editing, setEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const loadProfile = useCallback(async () => {
+    setLoading(true);
+    setError(null);
     try {
       const result = await authService.getProfile();
       setProfile(result);
@@ -34,6 +37,8 @@ function ProfileContent() {
       setPhone(result.phone ?? '');
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : t('loadError'));
+    } finally {
+      setLoading(false);
     }
   }, [t]);
 
@@ -65,10 +70,20 @@ function ProfileContent() {
 
   const language = i18n.language.split('-')[0];
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+    <ScrollView
+      style={styles.screen}
+      contentContainerStyle={styles.content}
+      refreshControl={
+        <RefreshControl
+          refreshing={loading}
+          onRefresh={() => { void loadProfile(); }}
+          tintColor={palette.gold}
+        />
+      }>
       <Text style={styles.eyebrow}>{t('account')}</Text>
       <Text style={styles.title}>{t('profile')}</Text>
       {error ? <Message error>{error}</Message> : null}
+      {loading && !profile ? <ActivityIndicator color={palette.gold} /> : null}
       <View style={styles.card}>
         <View style={styles.avatar}><Text style={styles.avatarText}>{(profile?.fullName ?? session?.user.name ?? '?').slice(0, 1).toUpperCase()}</Text></View>
         <Text style={styles.name}>{profile?.fullName ?? session?.user.name}</Text>

@@ -39,10 +39,9 @@ function AppNavigator() {
   }
 
   const firstSegment = segments[0];
-  const isAuthRoute = firstSegment === 'login' || firstSegment === 'register' || firstSegment === 'forgot-password';
+  const isAuthRoute = firstSegment === 'login' || firstSegment === 'register';
   if (!session && !isAuthRoute) return <Redirect href="/login" />;
   if (session && isAuthRoute) return <Redirect href={session.user.role === 'admin' ? '/admin' : '/(tabs)'} />;
-  if (session?.user.role === 'admin' && firstSegment !== 'admin') return <Redirect href="/admin" />;
   if (session?.user.role === 'customer' && firstSegment === 'admin') return <Redirect href="/(tabs)" />;
 
   return (

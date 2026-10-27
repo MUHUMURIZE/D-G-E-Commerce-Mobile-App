@@ -1,6 +1,5 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { productService, type ProductFilters } from '@/api/productService';
-import { DEMO_PRODUCTS } from '@/constants/products';
 import type { Product } from '@/types';
 
 interface ProductState {
@@ -11,8 +10,8 @@ interface ProductState {
 }
 
 const initialState: ProductState = {
-  items: DEMO_PRODUCTS,
-  loading: false,
+  items: [],
+  loading: true,
   error: null,
   filters: {},
 };

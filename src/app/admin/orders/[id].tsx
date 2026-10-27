@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { adminService, type AdminOrder } from '@/api/adminService';
@@ -20,13 +20,18 @@ export default function AdminOrderDetailsScreen() {
   const { notify } = useNotifications();
   const [order, setOrder] = useState<AdminOrder | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
     try {
       setOrder(await adminService.order(id));
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : t('loadError'));
+    } finally {
+      setLoading(false);
     }
   }, [id, t]);
 
@@ -47,9 +52,19 @@ export default function AdminOrderDetailsScreen() {
   };
 
   return (
-    <ScrollView style={adminStyles.screen} contentContainerStyle={adminStyles.content}>
+    <ScrollView
+      style={adminStyles.screen}
+      contentContainerStyle={adminStyles.content}
+      refreshControl={
+        <RefreshControl
+          refreshing={loading}
+          onRefresh={() => { void load(); }}
+          tintColor={palette.gold}
+        />
+      }>
       <AdminHeader title={t('orderDetails')} />
       {error ? <Message error>{error}</Message> : null}
+      {loading && !order ? <ActivityIndicator color={palette.gold} /> : null}
       {order ? (
         <>
           <View style={adminStyles.card}>

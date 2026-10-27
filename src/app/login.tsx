@@ -51,7 +51,6 @@ export default function LoginScreen() {
               secureTextEntry
               error={touched.password ? errors.password : undefined}
             />
-            <Link href="/forgot-password" style={styles.link}>{t('forgotPassword')}</Link>
             <AppButton title={t('signIn')} onPress={() => handleSubmit()} loading={isLoading} />
           </View>
         )}
@@ -68,7 +67,6 @@ const styles = StyleSheet.create({
   title: { maxWidth: 420, color: palette.ink, fontSize: 30, textAlign: 'center', fontWeight: '800' },
   intro: { maxWidth: 360, color: palette.muted, textAlign: 'center', marginBottom: 12, fontSize: 15, lineHeight: 22 },
   card: { width: '100%', maxWidth: 440, gap: 16, padding: 22, borderRadius: 22, backgroundColor: palette.white, borderWidth: 1, borderColor: palette.line, shadowColor: palette.shadow, shadowOpacity: 0.08, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 3 },
-  link: { color: palette.gold, textDecorationLine: 'none', fontSize: 13, alignSelf: 'flex-end', fontWeight: '700', paddingVertical: 6 },
   footer: { color: palette.muted, textAlign: 'center', fontSize: 14, marginTop: 8 },
   footerLink: { color: palette.gold, fontWeight: '700' },
 });

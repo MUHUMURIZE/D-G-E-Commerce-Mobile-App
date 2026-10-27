@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { adminService, type AdminUser } from '@/api/adminService';
@@ -17,13 +17,18 @@ export default function AdminUserDetailsScreen() {
   const currentUserId = useAppSelector((state) => state.auth.session?.user.id);
   const [user, setUser] = useState<AdminUser | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
     try {
       setUser(await adminService.user(id));
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : t('loadError'));
+    } finally {
+      setLoading(false);
     }
   }, [id, t]);
 
@@ -62,9 +67,19 @@ export default function AdminUserDetailsScreen() {
   };
 
   return (
-    <ScrollView style={adminStyles.screen} contentContainerStyle={adminStyles.content}>
+    <ScrollView
+      style={adminStyles.screen}
+      contentContainerStyle={adminStyles.content}
+      refreshControl={
+        <RefreshControl
+          refreshing={loading}
+          onRefresh={() => { void load(); }}
+          tintColor={palette.gold}
+        />
+      }>
       <AdminHeader title={t('userDetails')} />
       {error ? <Message error>{error}</Message> : null}
+      {loading && !user ? <ActivityIndicator color={palette.gold} /> : null}
       {user ? (
         <>
           <View style={adminStyles.card}>

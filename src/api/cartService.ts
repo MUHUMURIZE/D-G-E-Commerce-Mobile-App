@@ -2,10 +2,10 @@ import { apiClient } from '@/api/client';
 import type { CartItem } from '@/types';
 
 export const cartService = {
-  async sync(items: CartItem[]): Promise<void> {
-    await apiClient.put('/cart', { items });
+  async sync(items: CartItem[], signal?: AbortSignal): Promise<void> {
+    await apiClient.put('/cart', { items }, { signal });
   },
-  async clear(): Promise<void> {
-    await apiClient.delete('/cart');
+  async clear(signal?: AbortSignal): Promise<void> {
+    await apiClient.delete('/cart', { signal });
   },
 };

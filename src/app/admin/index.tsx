@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { adminService, type AdminDashboard } from '@/api/adminService';
 import { AdminHeader, adminStyles } from '@/components/admin/admin-header';
 import { AppButton } from '@/components/ui/app-button';
-import { Message } from '@/components/ui/message';
+import { EmptyState, Message } from '@/components/ui/message';
 import { palette } from '@/constants/palette';
 import { formatRwf } from '@/utils/formatCurrency';
 import { useAppDispatch } from '@/redux/hooks';
@@ -16,7 +16,7 @@ export default function AdminDashboardScreen() {
   const dispatch = useAppDispatch();
   const [data, setData] = useState<AdminDashboard | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -48,6 +48,8 @@ export default function AdminDashboardScreen() {
       refreshControl={<RefreshControl refreshing={loading} onRefresh={() => { void load(); }} tintColor={palette.gold} />}>
       <AdminHeader title={t('dashboard')} subtitle={t('adminPanel')} />
       {error ? <Message error>{error}</Message> : null}
+      {loading && !data ? <ActivityIndicator color={palette.gold} /> : null}
+      {!loading && !data && !error ? <EmptyState title={t('errorTitle')} body={t('loadError')} /> : null}
       <View style={styles.grid}>
         {stats.map(([key, value]) => (
           <View key={key} style={styles.stat}>

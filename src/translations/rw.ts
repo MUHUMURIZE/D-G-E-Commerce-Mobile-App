@@ -229,6 +229,7 @@ const rw = {
   kigaliRwanda: 'KIGALI · RWANDA',
   loadProductsError: 'Ntibyashobotse kuvugurura ibicuruzwa. Ibihari biracyagaragara mu gihe wongeye kugerageza.',
   cartStockChanged: 'Umubare w’ibicuruzwa bimwe urenze ububiko buhari. Kuramo ibitaboneka cyangwa ugabanye umubare.',
+  trackingLoadError: 'Ntibyashobotse kubona aho itumiza rigeze.',
 };
 
 export default rw;
