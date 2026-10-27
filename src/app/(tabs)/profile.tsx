@@ -105,11 +105,11 @@ function ProfileContent() {
         <View style={styles.editForm}>
           <AppInput label={t('fullName')} value={name} onChangeText={setName} />
           <AppInput label={t('phone')} value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
-          <AppButton title={t('saveChanges')} onPress={() => { void saveProfile(); }} loading={saving} />
+          <AppButton title={t('saveChanges')} variant="success" onPress={() => { void saveProfile(); }} loading={saving} />
           <AppButton title={t('cancel')} secondary onPress={() => setEditing(false)} />
         </View>
       ) : (
-        <AppButton title={t('editProfile')} secondary onPress={() => setEditing(true)} />
+        <AppButton title={t('editProfile')} variant="primary" onPress={() => setEditing(true)} />
       )}
 
       <Text style={styles.sectionTitle}>{t('accountSettings')}</Text>
@@ -159,7 +159,7 @@ function ProfileContent() {
         <AppButton title={t('adminPanel')} onPress={() => router.push('/admin')} />
       ) : null}
       {authError ? <Text style={styles.error}>{authError}</Text> : null}
-      <AppButton title={t('signOut')} secondary onPress={() => { void dispatch(signOut()); }} />
+      <AppButton title={t('signOut')} variant="danger" onPress={() => { void dispatch(signOut()); }} />
     </ScrollView>
   );
 }

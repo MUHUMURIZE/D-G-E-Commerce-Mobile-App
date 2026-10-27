@@ -250,6 +250,15 @@ const en = {
   decreaseQuantity: 'Decrease quantity',
   increaseQuantity: 'Increase quantity',
   addedToCart: 'Added to cart.',
+  store: 'Store',
+  openMenu: 'Open menu',
+  closeMenu: 'Close menu',
+  browseProducts: 'Browse products',
+  viewCartCount: 'View cart ({{count}})',
+  viewOrders: 'View orders',
+  quickActions: 'Quick actions',
+  categoriesAvailable: '{{count}} categories available',
+  clearCategory: 'Clear category filter',
 };
 
 export default en;

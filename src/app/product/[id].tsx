@@ -8,6 +8,7 @@ import { AppButton } from '@/components/ui/app-button';
 import { EmptyState, Message } from '@/components/ui/message';
 import { palette } from '@/constants/palette';
 import { resolveImageUrl } from '@/utils/imageUrl';
+import { navigateBack } from '@/utils/navigation';
 import { formatRwf } from '@/utils/formatCurrency';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { addToCart } from '@/redux/slices/cartSlice';
@@ -80,7 +81,7 @@ export default function ProductDetailsScreen() {
           tintColor={palette.gold}
         />
       }>
-      <Text style={styles.back} onPress={() => router.back()}>‹  {t('back')}</Text>
+      <Text style={styles.back} onPress={() => navigateBack('/(tabs)')}>‹  {t('back')}</Text>
       {error ? <Message error>{error}</Message> : null}
       <View style={styles.productCard}>
         <Image source={{ uri: resolveImageUrl(product.imageUrl) }} style={styles.image} contentFit="cover" />

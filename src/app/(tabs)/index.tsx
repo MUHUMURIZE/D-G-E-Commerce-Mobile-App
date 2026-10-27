@@ -12,6 +12,7 @@ import { palette } from '@/constants/palette';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { refreshProducts, setFilters } from '@/redux/slices/productSlice';
 import { fetchOrders } from '@/redux/slices/orderSlice';
+import { selectCartCount } from '@/redux/slices/cartSlice';
 import { formatRwf } from '@/utils/formatCurrency';
 import type { Order } from '@/types';
 
@@ -21,6 +22,7 @@ export default function HomeScreen() {
   const { items, loading, error, filters } = useAppSelector((state) => state.products);
   const { session } = useAppSelector((state) => state.auth);
   const { items: orders, loading: ordersLoading, error: ordersError } = useAppSelector((state) => state.orders);
+  const cartCount = useAppSelector((state) => selectCartCount(state.cart.items));
   const [search, setSearch] = useState(filters.search ?? '');
 
   useEffect(() => {
@@ -73,6 +75,12 @@ export default function HomeScreen() {
               <ActivityStat label={t('deliveredOrders')} value={deliveredCount} tone="delivered" />
               <ActivityStat label={t('totalOrders')} value={orders.length} tone="total" />
             </View>
+            <Text style={styles.quickActionsHeading}>{t('quickActions')}</Text>
+            <View style={styles.quickActions}>
+              <QuickAction icon="🛍️" label={t('browseProducts')} onPress={() => router.push('/(tabs)/categories')} />
+              <QuickAction icon="🛒" label={t('viewCartCount', { count: cartCount })} onPress={() => router.push('/(tabs)/cart')} />
+              <QuickAction icon="📦" label={t('viewOrders')} onPress={() => router.push('/(tabs)/orders')} />
+            </View>
             {ordersLoading && !orders.length ? <ActivityIndicator style={styles.ordersLoading} color={palette.gold} /> : null}
             {ordersError ? <Message error>{ordersError}</Message> : null}
             {!ordersLoading && !orders.length && !ordersError ? (
@@ -86,12 +94,6 @@ export default function HomeScreen() {
               onPress={() => router.push('/(tabs)/orders')}
               style={styles.viewOrders}>
               <Text style={styles.viewOrdersText}>{t('viewAllOrders')}  ›</Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => router.push('/(tabs)/categories')}
-              style={styles.continueButton}>
-              <Text style={styles.continueButtonText}>{t('continueShopping')}</Text>
             </Pressable>
           </View>
           <ImageBackground
@@ -176,6 +178,15 @@ function ActivityStat({ label, value, tone }: { label: string; value: number; to
   );
 }
 
+function QuickAction({ icon, label, onPress }: { icon: string; label: string; onPress: () => void }) {
+  return (
+    <Pressable accessibilityRole="button" onPress={onPress} style={styles.quickAction}>
+      <Text style={styles.quickActionIcon}>{icon}</Text>
+      <Text numberOfLines={2} style={styles.quickActionText}>{label}</Text>
+    </Pressable>
+  );
+}
+
 function RecentOrder({ order, onPress }: { order: Order; onPress: () => void }) {
   const { t } = useTranslation();
   return (
@@ -206,6 +217,11 @@ const styles = StyleSheet.create({
   stat: { flex: 1, minWidth: 0, alignItems: 'center', paddingVertical: 11, paddingHorizontal: 4, borderRadius: 12, backgroundColor: palette.paper },
   statValue: { color: palette.ink, fontSize: 19, fontWeight: '800' },
   statLabel: { marginTop: 4, color: palette.muted, fontSize: 9, textAlign: 'center' },
+  quickActionsHeading: { marginBottom: 8, color: palette.ink, fontSize: 12, fontWeight: '700' },
+  quickActions: { flexDirection: 'row', gap: 8, marginBottom: 8 },
+  quickAction: { flex: 1, minHeight: 72, alignItems: 'center', justifyContent: 'center', gap: 5, paddingHorizontal: 5, paddingVertical: 8, borderRadius: 11, backgroundColor: palette.goldLight },
+  quickActionIcon: { fontSize: 19 },
+  quickActionText: { color: palette.gold, fontSize: 10, fontWeight: '700', textAlign: 'center' },
   pendingValue: { color: palette.warning },
   deliveredValue: { color: palette.success },
   ordersLoading: { marginVertical: 10 },
@@ -217,8 +233,6 @@ const styles = StyleSheet.create({
   orderMeta: { marginTop: 5, color: palette.muted, fontSize: 11 },
   viewOrders: { alignSelf: 'flex-start', marginTop: 10, paddingVertical: 5 },
   viewOrdersText: { color: palette.gold, fontSize: 12, fontWeight: '700' },
-  continueButton: { minHeight: 42, alignItems: 'center', justifyContent: 'center', marginTop: 8, borderRadius: 11, backgroundColor: palette.gold },
-  continueButtonText: { color: palette.white, fontWeight: '700', fontSize: 13 },
   hero: { height: 240, justifyContent: 'flex-end', padding: 24, marginBottom: 18, borderRadius: 22, overflow: 'hidden', backgroundColor: '#334155' },
   heroImage: { borderRadius: 22 },
   heroShade: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.28)' },

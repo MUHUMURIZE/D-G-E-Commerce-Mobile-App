@@ -250,6 +250,15 @@ const rw = {
   decreaseQuantity: 'Gabanya umubare',
   increaseQuantity: 'Ongera umubare',
   addedToCart: 'Byongewe mu gaseke.',
+  store: 'Iduka',
+  openMenu: 'Fungura urutonde',
+  closeMenu: 'Funga urutonde',
+  browseProducts: 'Reba ibicuruzwa',
+  viewCartCount: 'Reba agaseke ({{count}})',
+  viewOrders: 'Reba amatumiza',
+  quickActions: 'Ibikorwa byihuse',
+  categoriesAvailable: 'Ibyiciro {{count}} birahari',
+  clearCategory: 'Kuraho icyiciro cyatoranyijwe',
 };
 
 export default rw;

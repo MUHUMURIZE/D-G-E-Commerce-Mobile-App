@@ -1,13 +1,13 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { palette } from '@/constants/palette';
+import { navigateBack } from '@/utils/navigation';
 
 export function AdminHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   const { t } = useTranslation();
   return (
     <View style={styles.wrap}>
-      <Pressable accessibilityRole="button" accessibilityLabel={t('back')} onPress={() => router.back()}>
+      <Pressable accessibilityRole="button" accessibilityLabel={t('back')} onPress={() => navigateBack('/admin')}>
         <Text style={styles.back}>‹  {t('back')}</Text>
       </Pressable>
       <Text style={styles.eyebrow}>{t('adminPanel')}</Text>

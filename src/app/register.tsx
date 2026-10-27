@@ -7,6 +7,7 @@ import { AppButton } from '@/components/ui/app-button';
 import { AppInput } from '@/components/ui/app-input';
 import { Message } from '@/components/ui/message';
 import { palette } from '@/constants/palette';
+import { navigateBack } from '@/utils/navigation';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { signUp } from '@/redux/slices/authSlice';
 
@@ -28,7 +29,7 @@ export default function RegisterScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-      <Text onPress={() => router.back()} style={styles.back}>‹  {t('back')}</Text>
+      <Text onPress={() => navigateBack('/login')} style={styles.back}>‹  {t('back')}</Text>
       <Text style={styles.brandMark}>{t('brand')}</Text>
       <Text style={styles.title}>{t('createYourAccount')}</Text>
       <Text style={styles.intro}>{t('joinIntro')}</Text>
@@ -47,7 +48,7 @@ export default function RegisterScreen() {
             <AppInput label={t('phone')} value={values.phone} onChangeText={handleChange('phone')} onBlur={handleBlur('phone')} error={touched.phone ? errors.phone : undefined} keyboardType="phone-pad" placeholder="+250 7XX XXX XXX" />
             <AppInput label={t('password')} value={values.password} onChangeText={handleChange('password')} onBlur={handleBlur('password')} error={touched.password ? errors.password : undefined} secureTextEntry />
             <AppInput label={t('confirmPassword')} value={values.confirmPassword} onChangeText={handleChange('confirmPassword')} onBlur={handleBlur('confirmPassword')} error={touched.confirmPassword ? errors.confirmPassword : undefined} secureTextEntry />
-            <AppButton title={t('createAccount')} onPress={() => handleSubmit()} loading={isLoading} />
+            <AppButton title={t('createAccount')} variant="success" onPress={() => handleSubmit()} loading={isLoading} />
           </View>
         )}
       </Formik>

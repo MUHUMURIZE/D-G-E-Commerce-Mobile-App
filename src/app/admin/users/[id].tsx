@@ -106,7 +106,7 @@ export default function AdminUserDetailsScreen() {
             ))}
           </View>
           {currentUserId !== user.id ? (
-            <AppButton title={t('deleteUser')} secondary onPress={deleteUser} loading={saving} />
+            <AppButton title={t('deleteUser')} variant="danger" onPress={deleteUser} loading={saving} />
           ) : null}
         </>
       ) : null}

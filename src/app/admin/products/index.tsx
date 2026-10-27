@@ -94,7 +94,7 @@ export default function AdminProductsScreen() {
               </Pressable>
             ))}
           </View>
-          <AppButton title={t('createProduct')} onPress={() => router.push('/admin/products/new')} />
+          <AppButton title={t('createProduct')} variant="success" onPress={() => router.push('/admin/products/new')} />
         </View>
       }
       ListEmptyComponent={
@@ -120,7 +120,7 @@ export default function AdminProductsScreen() {
           </View>
           <View style={styles.actions}>
             <Pressable onPress={() => router.push({ pathname: '/admin/products/[id]/edit', params: { id: item.id } })}><Text style={adminStyles.action}>{t('edit')}</Text></Pressable>
-            <Pressable onPress={() => router.push({ pathname: '/admin/products/[id]/restock', params: { id: item.id } })}><Text style={adminStyles.action}>{t('restock')}</Text></Pressable>
+            <Pressable onPress={() => router.push({ pathname: '/admin/products/[id]/restock', params: { id: item.id } })}><Text style={styles.restock}>{t('restock')}</Text></Pressable>
             <Pressable onPress={() => confirmDelete(item)}><Text style={styles.delete}>{t('delete')}</Text></Pressable>
           </View>
         </View>
@@ -145,5 +145,6 @@ const styles = StyleSheet.create({
   low: { color: palette.warning, fontSize: 12, fontWeight: '700' },
   out: { color: palette.danger, fontSize: 12, fontWeight: '700' },
   actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 20, paddingTop: 14 },
+  restock: { color: palette.warning, fontSize: 13, fontWeight: '700' },
   delete: { color: palette.danger, fontSize: 13, fontWeight: '700' },
 });

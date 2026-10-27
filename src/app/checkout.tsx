@@ -11,6 +11,7 @@ import { Message } from '@/components/ui/message';
 import { palette } from '@/constants/palette';
 import { formatRwf } from '@/utils/formatCurrency';
 import { exceedsAvailableQuantity } from '@/utils/inventory';
+import { navigateBack } from '@/utils/navigation';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { clearCart, selectCartTotal } from '@/redux/slices/cartSlice';
 import { submitOrder } from '@/redux/slices/orderSlice';
@@ -50,7 +51,7 @@ function CheckoutContent() {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-      <Text onPress={() => router.back()} style={styles.back}>‹  {t('back')} · {t('cart')}</Text>
+      <Text onPress={() => navigateBack('/(tabs)/cart')} style={styles.back}>‹  {t('back')} · {t('cart')}</Text>
       <Text style={styles.eyebrow}>{t('secureCheckout')}</Text>
       <Text style={styles.title}>{t('deliveryDetails')}</Text>
       {error ? <Message error>{error}</Message> : null}

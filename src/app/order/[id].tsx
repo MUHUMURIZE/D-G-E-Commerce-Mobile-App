@@ -12,6 +12,7 @@ import { palette } from '@/constants/palette';
 import { formatRwf } from '@/utils/formatCurrency';
 import { useAppSelector } from '@/redux/hooks';
 import { resolveImageUrl } from '@/utils/imageUrl';
+import { navigateBack } from '@/utils/navigation';
 import type { Order, OrderLine, Product } from '@/types';
 
 function OrderDetailContent() {
@@ -72,7 +73,7 @@ function OrderDetailContent() {
           tintColor={palette.gold}
         />
       }>
-      <Text onPress={() => router.back()} style={styles.back}>‹  {t('back')}</Text>
+      <Text onPress={() => navigateBack('/(tabs)/orders')} style={styles.back}>‹  {t('back')}</Text>
       <Text style={styles.eyebrow}>{t('orderId', { id: order.id.slice(-8).toUpperCase() })}</Text>
       <Text style={styles.title}>{t('orderDetails')}</Text>
       <Text style={styles.date}>{t('placedOn', { date: new Date(order.created_at).toLocaleDateString() })}</Text>

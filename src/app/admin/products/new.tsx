@@ -104,7 +104,7 @@ export default function NewAdminProductScreen() {
       <Text style={adminStyles.muted}>{t('uploadImageHint')}</Text>
       {image ? <Image source={{ uri: image.uri }} style={styles.preview} contentFit="cover" /> : null}
       <AppButton title={image ? t('changeImage') : t('chooseImage')} secondary onPress={() => { void chooseImage(); }} />
-      <AppButton title={t('saveProduct')} onPress={() => { void submit(); }} loading={saving} />
+      <AppButton title={t('saveProduct')} variant="success" onPress={() => { void submit(); }} loading={saving} />
     </ScrollView>
   );
 }

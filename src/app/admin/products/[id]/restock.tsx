@@ -45,7 +45,7 @@ export default function RestockProductScreen() {
       <Text style={styles.hint}>{t('restockQuantity')}</Text>
       {error ? <Message error>{error}</Message> : null}
       <AppInput label={t('quantity')} value={quantity} onChangeText={setQuantity} keyboardType="number-pad" />
-      <AppButton title={t('restock')} onPress={() => { void submit(); }} loading={saving} />
+      <AppButton title={t('restock')} variant="warning" onPress={() => { void submit(); }} loading={saving} />
     </ScrollView>
   );
 }

@@ -62,7 +62,7 @@ export default function AdminDashboardScreen() {
       <AppButton title={t('allProducts')} onPress={() => router.push('/admin/products')} />
       <AppButton title={t('users')} secondary onPress={() => router.push('/admin/users')} />
       <AppButton title={t('customerOrders')} secondary onPress={() => router.push('/admin/orders')} />
-      <AppButton title={t('createProduct')} secondary onPress={() => router.push('/admin/products/new')} />
+      <AppButton title={t('createProduct')} variant="success" onPress={() => router.push('/admin/products/new')} />
       <AppButton title={t('signOut')} variant="danger" onPress={() => { void dispatch(signOut()); }} />
     </ScrollView>
   );
