@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { orderService } from '@/api/orderService';
 import { OrderTimeline } from '@/components/order-timeline';
 import { AuthGate } from '@/components/auth-gate';
@@ -10,6 +11,7 @@ import { useAppSelector } from '@/redux/hooks';
 import type { Order } from '@/types';
 
 function TrackingContent() {
+  const { t } = useTranslation();
   const { id } = useLocalSearchParams<{ id: string }>();
   const existing = useAppSelector((state) => state.orders.items.find((item) => item.id === id));
   const [result, setResult] = useState<{ id: string; order?: Order; error?: string } | null>(null);
@@ -36,9 +38,9 @@ function TrackingContent() {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Text style={styles.eyebrow}>D&amp;G DELIVERY</Text>
-      <Text style={styles.title}>Track your order</Text>
-      <Text style={styles.order}>ORDER {id?.slice(-8).toUpperCase()}</Text>
+      <Text style={styles.eyebrow}>{t('orderTracking')}</Text>
+      <Text style={styles.title}>{t('trackYourOrder')}</Text>
+      <Text style={styles.order}>{t('orderId', { id: id?.slice(-8).toUpperCase() })}</Text>
       {order ? (
         <OrderTimeline status={order.status} />
       ) : loading ? (
@@ -51,7 +53,7 @@ function TrackingContent() {
 }
 
 export default function TrackingScreen() {
-  return <AuthGate redirectTo="/(tabs)/orders"><TrackingContent /></AuthGate>;
+  return <AuthGate><TrackingContent /></AuthGate>;
 }
 
 const styles = StyleSheet.create({

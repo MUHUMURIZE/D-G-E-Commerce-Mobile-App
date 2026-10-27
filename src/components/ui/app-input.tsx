@@ -22,14 +22,14 @@ export function AppInput({ label, error, style, ...props }: AppInputProps) {
 }
 
 const styles = StyleSheet.create({
-  group: { gap: 7 },
-  label: { color: palette.ink, fontSize: 13, fontWeight: '600' },
+  group: { gap: 8 },
+  label: { color: palette.ink, fontSize: 13, fontWeight: '700' },
   input: {
-    minHeight: 50,
-    paddingHorizontal: 14,
+    minHeight: 52,
+    paddingHorizontal: 16,
     borderWidth: 1,
     borderColor: palette.line,
-    borderRadius: 4,
+    borderRadius: 13,
     color: palette.ink,
     backgroundColor: palette.white,
     fontSize: 15,

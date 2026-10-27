@@ -21,13 +21,13 @@ export function EmptyState({ title, body }: { title: string; body: string }) {
 }
 
 const styles = StyleSheet.create({
-  box: { padding: 13, borderRadius: 4, marginVertical: 8 },
+  box: { padding: 15, borderRadius: 14, marginVertical: 8 },
   infoBox: { backgroundColor: palette.goldLight },
   errorBox: { backgroundColor: '#FDECEA' },
   text: { color: palette.ink, fontSize: 13, lineHeight: 18 },
   errorText: { color: palette.danger },
-  empty: { alignItems: 'center', justifyContent: 'center', padding: 36, gap: 12 },
+  empty: { alignItems: 'center', justifyContent: 'center', padding: 36, gap: 12, borderRadius: 20, backgroundColor: palette.white, borderWidth: 1, borderColor: palette.line },
   emptyMark: { color: palette.gold, fontSize: 22, letterSpacing: 5 },
-  emptyTitle: { color: palette.ink, fontSize: 20, fontWeight: '600' },
+  emptyTitle: { color: palette.ink, fontSize: 20, fontWeight: '800' },
   emptyBody: { color: palette.muted, textAlign: 'center', lineHeight: 22 },
 });

@@ -5,6 +5,7 @@ import { AppButton } from '@/components/ui/app-button';
 import { EmptyState } from '@/components/ui/message';
 import { palette } from '@/constants/palette';
 import { formatRwf } from '@/utils/formatCurrency';
+import { exceedsAvailableQuantity, getAvailableQuantity } from '@/utils/inventory';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { clearCart, removeFromCart, selectCartTotal, setQuantity } from '@/redux/slices/cartSlice';
 
@@ -14,52 +15,67 @@ export default function CartScreen() {
   const items = useAppSelector((state) => state.cart.items);
   const subtotal = selectCartTotal(items);
   const delivery = items.length === 0 || subtotal >= 200000 ? 0 : 5000;
+  const hasUnavailableItems = items.some(({ product, quantity }) =>
+    exceedsAvailableQuantity(product.availabilityStatus, quantity));
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Text style={styles.eyebrow}>D&amp;G · KIGALI</Text>
+      <Text style={styles.eyebrow}>{t('brand')}</Text>
       <View style={styles.titleRow}>
         <Text style={styles.title}>{t('cart')}</Text>
-        {items.length ? <Text onPress={() => dispatch(clearCart())} style={styles.clear}>Clear bag</Text> : null}
+        {items.length ? <Text onPress={() => dispatch(clearCart())} style={styles.clear}>{t('clearCart')}</Text> : null}
       </View>
       {!items.length ? (
         <EmptyState title={t('emptyCart')} body={t('emptyCartBody')} />
       ) : (
         <>
-          {items.map(({ product, quantity }) => (
-            <View key={product.id} style={styles.item}>
-              <Image source={{ uri: product.imageUrl }} style={styles.image} />
-              <View style={styles.details}>
-                <Text style={styles.category}>{product.category.toUpperCase()}</Text>
-                <Text style={styles.name}>{product.name}</Text>
-                <Text style={styles.price}>{formatRwf(product.price)}</Text>
-                <Text style={styles.availability}>{product.availabilityStatus}</Text>
-                <View style={styles.actions}>
-                  <Text onPress={() => dispatch(setQuantity({ productId: product.id, quantity: quantity - 1 }))} style={styles.quantityButton}>−</Text>
-                  <Text style={styles.quantity}>{quantity}</Text>
-                  <Text
-                    accessibilityState={{ disabled: product.availabilityStatus === 'Out Of Stock' }}
-                    onPress={product.availabilityStatus === 'Out Of Stock'
-                      ? undefined
-                      : () => dispatch(setQuantity({ productId: product.id, quantity: quantity + 1 }))}
-                    style={[styles.quantityButton, product.availabilityStatus === 'Out Of Stock' && styles.disabledQuantityButton]}>+</Text>
-                  <Text onPress={() => dispatch(removeFromCart(product.id))} style={styles.remove}>Remove</Text>
+          {items.map(({ product, quantity }) => {
+            const availableQuantity = getAvailableQuantity(product.availabilityStatus);
+            const isOutOfStock = availableQuantity === 0;
+            const availability = isOutOfStock
+              ? t('outOfStock')
+              : availableQuantity !== undefined
+                ? t('onlyLeft', { count: availableQuantity })
+                : t('inStock');
+            const quantityLimitReached = isOutOfStock
+              || (availableQuantity !== undefined && quantity >= availableQuantity);
+            return (
+              <View key={product.id} style={styles.item}>
+                <Image source={{ uri: product.imageUrl }} style={styles.image} />
+                <View style={styles.details}>
+                  <Text style={styles.category}>{t(product.category).toUpperCase()}</Text>
+                  <Text style={styles.name}>{product.name}</Text>
+                  <Text style={styles.price}>{formatRwf(product.price)}</Text>
+                  <Text style={styles.availability}>{availability}</Text>
+                  <View style={styles.actions}>
+                    <Text accessibilityRole="button" onPress={() => dispatch(setQuantity({ productId: product.id, quantity: quantity - 1 }))} style={styles.quantityButton}>−</Text>
+                    <Text style={styles.quantity}>{quantity}</Text>
+                    <Text
+                      accessibilityRole="button"
+                      accessibilityState={{ disabled: quantityLimitReached }}
+                      onPress={quantityLimitReached
+                        ? undefined
+                        : () => dispatch(setQuantity({ productId: product.id, quantity: quantity + 1 }))}
+                      style={[styles.quantityButton, quantityLimitReached && styles.disabledQuantityButton]}>+</Text>
+                    <Text onPress={() => dispatch(removeFromCart(product.id))} style={styles.remove}>{t('remove')}</Text>
+                  </View>
                 </View>
               </View>
-            </View>
-          ))}
+            );
+          })}
           <View style={styles.summary}>
             <Row label={t('subtotal')} value={formatRwf(subtotal)} />
-            <Row label={t('delivery')} value={delivery ? formatRwf(delivery) : 'FREE'} />
+            <Row label={t('delivery')} value={delivery ? formatRwf(delivery) : t('free').toUpperCase()} />
             <View style={styles.divider} />
             <Row label={t('total')} value={formatRwf(subtotal + delivery)} strong />
           </View>
           <AppButton
             title={t('checkout')}
-            disabled={items.some(({ product }) => product.availabilityStatus === 'Out Of Stock')}
+            disabled={hasUnavailableItems}
             onPress={() => router.push('/checkout')}
           />
-          <Text style={styles.deliveryNote}>Free delivery in Rwanda on orders over 200,000 RWF.</Text>
+          {hasUnavailableItems ? <Text style={styles.availability}>{t('cartStockChanged')}</Text> : null}
+          <Text style={styles.deliveryNote}>{t('freeDelivery')}</Text>
         </>
       )}
     </ScrollView>

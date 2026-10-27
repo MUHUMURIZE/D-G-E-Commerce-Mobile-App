@@ -1,15 +1,18 @@
 import { StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { palette } from '@/constants/palette';
 import type { OrderStatus } from '@/types';
 
-const steps: { status: OrderStatus; title: string; description: string }[] = [
-  { status: 'placed', title: 'Order placed', description: 'We have received your order.' },
-  { status: 'confirmed', title: 'Confirmed', description: 'The order is being prepared.' },
-  { status: 'shipped', title: 'On its way', description: 'Your order is with our delivery team.' },
-  { status: 'delivered', title: 'Delivered', description: 'Your order has arrived.' },
+const steps: { status: OrderStatus; title: string }[] = [
+  { status: 'Pending', title: 'pending' },
+  { status: 'Confirmed', title: 'confirmed' },
+  { status: 'Packing', title: 'packing' },
+  { status: 'Shipped', title: 'shipped' },
+  { status: 'Delivered', title: 'delivered' },
 ];
 
 export function OrderTimeline({ status }: { status: OrderStatus }) {
+  const { t } = useTranslation();
   const activeIndex = steps.findIndex((step) => step.status === status);
   return (
     <View style={styles.container}>
@@ -22,8 +25,7 @@ export function OrderTimeline({ status }: { status: OrderStatus }) {
               {index < steps.length - 1 ? <View style={[styles.line, index < activeIndex && styles.activeLine]} /> : null}
             </View>
             <View style={styles.copy}>
-              <Text style={[styles.title, complete && styles.activeText]}>{step.title}</Text>
-              <Text style={styles.description}>{step.description}</Text>
+              <Text style={[styles.title, complete && styles.activeText]}>{t(step.title)}</Text>
             </View>
           </View>
         );
@@ -34,14 +36,14 @@ export function OrderTimeline({ status }: { status: OrderStatus }) {
 
 const styles = StyleSheet.create({
   container: { marginTop: 20 },
-  step: { minHeight: 70, flexDirection: 'row', gap: 14 },
+  step: { minHeight: 58, flexDirection: 'row', gap: 14 },
   track: { width: 20, alignItems: 'center' },
-  dot: { width: 13, height: 13, borderRadius: 7, borderWidth: 1, borderColor: palette.line, backgroundColor: palette.white, zIndex: 1 },
-  activeDot: { borderColor: palette.gold, backgroundColor: palette.gold },
+  dot: { width: 16, height: 16, borderRadius: 8, borderWidth: 2, borderColor: palette.line, backgroundColor: palette.white, zIndex: 1 },
+  activeDot: { borderColor: palette.success, backgroundColor: palette.success },
   line: { position: 'absolute', top: 12, bottom: 0, width: 1, backgroundColor: palette.line },
-  activeLine: { backgroundColor: palette.gold },
+  activeLine: { backgroundColor: palette.success },
   copy: { flex: 1, paddingBottom: 16 },
   title: { color: palette.muted, fontSize: 14, fontWeight: '600' },
-  activeText: { color: palette.ink },
+  activeText: { color: palette.ink, fontWeight: '800' },
   description: { marginTop: 4, color: palette.muted, fontSize: 12 },
 });

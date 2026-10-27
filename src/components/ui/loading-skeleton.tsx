@@ -1,9 +1,11 @@
 import { StyleSheet, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { palette } from '@/constants/palette';
 
 export function ProductGridSkeleton() {
+  const { t } = useTranslation();
   return (
-    <View accessibilityLabel="Loading products" style={styles.row}>
+    <View accessibilityLabel={t('loadingProducts')} style={styles.row}>
       {[0, 1].map((item) => (
         <View key={item} style={styles.card}>
           <View style={styles.image} />

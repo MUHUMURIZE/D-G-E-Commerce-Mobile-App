@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { orderService } from '@/api/orderService';
 import { AuthGate } from '@/components/auth-gate';
 import { OrderTimeline } from '@/components/order-timeline';
@@ -11,6 +12,7 @@ import { useAppSelector } from '@/redux/hooks';
 import type { Order } from '@/types';
 
 function OrderDetailContent() {
+  const { t } = useTranslation();
   const { id } = useLocalSearchParams<{ id: string }>();
   const existing = useAppSelector((state) => state.orders.items.find((order) => order.id === id));
   const [result, setResult] = useState<{ id: string; order?: Order; error?: string } | null>(null);
@@ -36,31 +38,31 @@ function OrderDetailContent() {
   const loading = !existing && result?.id !== id;
 
   if (loading) return <ActivityIndicator style={styles.loading} color={palette.gold} />;
-  if (error || !order) return <Message error>{error ?? 'Order not found.'}</Message>;
+  if (error || !order) return <Message error>{error ?? t('orderNotFound')}</Message>;
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Text onPress={() => router.back()} style={styles.back}>‹  BACK</Text>
-      <Text style={styles.eyebrow}>ORDER {order.id.slice(-8).toUpperCase()}</Text>
-      <Text style={styles.title}>Order details</Text>
-      <Text style={styles.date}>Placed {new Date(order.createdAt).toLocaleDateString()}</Text>
+      <Text onPress={() => router.back()} style={styles.back}>‹  {t('back')}</Text>
+      <Text style={styles.eyebrow}>{t('orderId', { id: order.id.slice(-8).toUpperCase() })}</Text>
+      <Text style={styles.title}>{t('orderDetails')}</Text>
+      <Text style={styles.date}>{t('placedOn', { date: new Date(order.created_at).toLocaleDateString() })}</Text>
       <OrderTimeline status={order.status} />
-      <Text style={styles.heading}>ITEMS</Text>
+      <Text style={styles.heading}>{t('orderItems').toUpperCase()}</Text>
       {order.items.map((item) => (
-        <Text key={item.product.id} style={styles.item}>
-          {item.quantity} × {item.product.name} · {formatRwf(item.product.price * item.quantity)}
+        <Text key={item.id} style={styles.item}>
+          {item.quantity} × {item.productId.slice(-8)} · {formatRwf(item.unitPrice * item.quantity)}
         </Text>
       ))}
-      <Text style={styles.total}>Total  {formatRwf(order.total)}</Text>
-      <Text style={styles.heading}>DELIVERY</Text>
-      <Text style={styles.address}>{order.address.fullName}{'\n'}{order.address.phone}{'\n'}{order.address.district}, {order.address.province}{'\n'}{order.address.street}</Text>
-      <Text onPress={() => router.push({ pathname: '/tracking/[id]', params: { id: order.id } })} style={styles.track}>Track this order  ›</Text>
+      <Text style={styles.total}>{t('total')}  {formatRwf(order.totalAmount)}</Text>
+      <Text style={styles.heading}>{t('deliveryDetails').toUpperCase()}</Text>
+      <Text style={styles.address}>{order.shippingAddress.fullName}{'\n'}{order.shippingAddress.phone}{'\n'}{order.shippingAddress.district}, {order.shippingAddress.province}{'\n'}{order.shippingAddress.street}</Text>
+      <Text onPress={() => router.push({ pathname: '/tracking/[id]', params: { id: order.id } })} style={styles.track}>{t('trackOrder')}  ›</Text>
     </ScrollView>
   );
 }
 
 export default function OrderDetailScreen() {
-  return <AuthGate redirectTo="/(tabs)/orders"><OrderDetailContent /></AuthGate>;
+  return <AuthGate><OrderDetailContent /></AuthGate>;
 }
 
 const styles = StyleSheet.create({

@@ -31,6 +31,8 @@ export default function HomeScreen() {
   }, [filters.category, filters.maxPrice, filters.minPrice, items, search]);
 
   const categories = ['All', ...Array.from(new Set(items.map((item) => item.category)))];
+  const newArrivals = [...items].reverse().sort((left, right) =>
+    new Date(right.created_at ?? 0).getTime() - new Date(left.created_at ?? 0).getTime());
 
   return (
     <FlatList
@@ -44,15 +46,15 @@ export default function HomeScreen() {
       ListHeaderComponent={
         <View>
           <View style={styles.topline}>
-            <Text style={styles.brand}>D&amp;G</Text>
-            <Text style={styles.location}>KIGALI · RWANDA</Text>
+            <Text style={styles.brand}>{t('brand')}</Text>
+            <Text style={styles.location}>{t('kigaliRwanda')}</Text>
           </View>
           <ImageBackground
             source={{ uri: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=1200' }}
             style={styles.hero}
             imageStyle={styles.heroImage}>
             <View style={styles.heroShade} />
-            <Text style={styles.heroEyebrow}>MADE FOR YOUR EVERY DAY</Text>
+            <Text style={styles.heroEyebrow}>{t('featuredSubtitle')}</Text>
             <Text style={styles.heroTitle}>{t('featured')}</Text>
             <Text style={styles.heroCaption}>{t('shopNow')}</Text>
           </ImageBackground>
@@ -73,20 +75,35 @@ export default function HomeScreen() {
                   key={category}
                   onPress={() => dispatch(setFilters({ ...filters, category: category === 'All' ? undefined : category }))}
                   style={[styles.chip, selected && styles.selectedChip]}>
-                  {category}
+                  {category === 'All' ? t('all') : t(category)}
                 </Text>
               );
             })}
           </ScrollView>
-          {error ? <Message error>{error} Showing the available collection while you retry.</Message> : null}
+          {error ? <Message error>{t('loadProductsError')}</Message> : null}
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>{t('featured')}</Text>
-            <Text style={styles.count}>{visibleProducts.length} ITEMS</Text>
+            <Text style={styles.count}>{t('productsCount', { count: visibleProducts.length }).toUpperCase()}</Text>
           </View>
         </View>
       }
       ListEmptyComponent={
-        loading ? <ProductGridSkeleton /> : <Text style={styles.empty}>No products match your search.</Text>
+        loading ? <ProductGridSkeleton /> : <Text style={styles.empty}>{t('noMatchingProducts')}</Text>
+      }
+      ListFooterComponent={
+        items.length ? (
+          <View style={styles.newArrivals}>
+            <Text style={styles.sectionTitle}>{t('newArrivals')}</Text>
+            <Text style={styles.newArrivalSubtitle}>{t('newArrivalsSubtitle')}</Text>
+            {[0, 1].map((row) => (
+              <View key={row} style={styles.newArrivalRow}>
+                {newArrivals.slice(row * 2, row * 2 + 2).map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </View>
+            ))}
+          </View>
+        ) : undefined
       }
       refreshControl={
         <RefreshControl
@@ -105,19 +122,22 @@ const styles = StyleSheet.create({
   topline: { height: 62, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   brand: { fontSize: 24, letterSpacing: 6, color: palette.ink, fontWeight: '500' },
   location: { fontSize: 9, letterSpacing: 1.5, color: palette.muted },
-  hero: { height: 260, justifyContent: 'flex-end', padding: 22, marginBottom: 18, backgroundColor: '#766A60' },
-  heroImage: { borderRadius: 4 },
+  hero: { height: 270, justifyContent: 'flex-end', padding: 24, marginBottom: 18, borderRadius: 22, overflow: 'hidden', backgroundColor: '#334155' },
+  heroImage: { borderRadius: 22 },
   heroShade: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.28)' },
   heroEyebrow: { fontSize: 10, letterSpacing: 2, color: palette.white, marginBottom: 8 },
   heroTitle: { fontSize: 27, fontWeight: '600', color: palette.white, marginBottom: 12 },
   heroCaption: { fontSize: 11, letterSpacing: 1.5, color: palette.white },
   search: { marginBottom: 12 },
   chips: { gap: 8, paddingVertical: 6 },
-  chip: { paddingHorizontal: 14, paddingVertical: 9, borderRadius: 20, overflow: 'hidden', color: palette.ink, backgroundColor: palette.white, fontSize: 12 },
-  selectedChip: { color: palette.white, backgroundColor: palette.ink },
+  chip: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, overflow: 'hidden', color: palette.ink, backgroundColor: palette.white, borderWidth: 1, borderColor: palette.line, fontSize: 12, fontWeight: '600' },
+  selectedChip: { color: palette.white, backgroundColor: palette.gold, borderColor: palette.gold },
   sectionHeader: { marginTop: 22, marginBottom: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   sectionTitle: { fontSize: 18, color: palette.ink, fontWeight: '600' },
   count: { color: palette.muted, fontSize: 9, letterSpacing: 1.2 },
   row: { gap: 14 },
   empty: { padding: 30, textAlign: 'center', color: palette.muted },
+  newArrivals: { marginTop: 30 },
+  newArrivalSubtitle: { color: palette.muted, fontSize: 13, marginTop: 5, marginBottom: 14 },
+  newArrivalRow: { flexDirection: 'row', gap: 14 },
 });

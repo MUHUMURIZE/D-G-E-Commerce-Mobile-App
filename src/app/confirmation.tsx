@@ -1,19 +1,21 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { AppButton } from '@/components/ui/app-button';
 import { palette } from '@/constants/palette';
 
 export default function ConfirmationScreen() {
+  const { t } = useTranslation();
   const { id } = useLocalSearchParams<{ id: string }>();
   return (
     <View style={styles.screen}>
       <Text style={styles.mark}>D&amp;G</Text>
       <Text style={styles.check}>✓</Text>
-      <Text style={styles.title}>Thank you for your order.</Text>
-      <Text style={styles.copy}>Your order has been received. We’ll keep you updated as it makes its way to you.</Text>
-      {id ? <Text style={styles.order}>ORDER {id.toUpperCase()}</Text> : null}
-      <AppButton title="TRACK YOUR ORDER" onPress={() => router.replace({ pathname: '/order/[id]', params: { id: id ?? '' } })} />
-      <Text onPress={() => router.replace('/(tabs)')} style={styles.continue}>Continue shopping</Text>
+      <Text style={styles.title}>{t('thankYou')}</Text>
+      <Text style={styles.copy}>{t('orderReceived')}</Text>
+      {id ? <Text style={styles.order}>{t('orderId', { id: id.toUpperCase() })}</Text> : null}
+      <AppButton title={t('trackYourOrder')} onPress={() => router.replace({ pathname: '/order/[id]', params: { id: id ?? '' } })} />
+      <Text onPress={() => router.replace('/(tabs)')} style={styles.continue}>{t('continueShopping')}</Text>
     </View>
   );
 }

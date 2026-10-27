@@ -1,26 +1,31 @@
 import { useState } from 'react';
-import { Link } from 'expo-router';
+import { Link, Redirect } from 'expo-router';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { ScrollView, StyleSheet, Text } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { authService } from '@/api/authService';
 import { AppButton } from '@/components/ui/app-button';
 import { AppInput } from '@/components/ui/app-input';
 import { Message } from '@/components/ui/message';
 import { palette } from '@/constants/palette';
-
-const schema = Yup.object({ email: Yup.string().email('Enter a valid email address.').required('Email is required.') });
+import { useAppSelector } from '@/redux/hooks';
 
 export default function ForgotPasswordScreen() {
+  const { session } = useAppSelector((state) => state.auth);
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const schema = Yup.object({ email: Yup.string().email(t('invalidEmail')).required(t('required')) });
+
+  if (session) return <Redirect href={session.user.role === 'admin' ? '/admin' : '/(tabs)'} />;
 
   return (
     <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
       <Text style={styles.brand}>D&amp;G</Text>
-      <Text style={styles.title}>Reset your password</Text>
-      <Text style={styles.intro}>Enter your account email and we’ll send reset instructions if it exists.</Text>
+      <Text style={styles.title}>{t('resetPassword')}</Text>
+      <Text style={styles.intro}>{t('resetIntro')}</Text>
       {message ? <Message>{message}</Message> : null}
       {error ? <Message error>{error}</Message> : null}
       <Formik
@@ -32,9 +37,9 @@ export default function ForgotPasswordScreen() {
           setMessage(null);
           try {
             await authService.forgotPassword(email);
-            setMessage('If an account exists for this email, reset instructions have been sent.');
+            setMessage(t('resetInstructions'));
           } catch (requestError) {
-            setError(requestError instanceof Error ? requestError.message : 'Unable to send reset instructions.');
+            setError(requestError instanceof Error ? requestError.message : t('unknownError'));
           } finally {
             setLoading(false);
           }
@@ -42,7 +47,7 @@ export default function ForgotPasswordScreen() {
         {({ handleChange, handleBlur, handleSubmit, values, errors, touched }) => (
           <>
             <AppInput
-              label="Email address"
+              label={t('email')}
               value={values.email}
               onChangeText={handleChange('email')}
               onBlur={handleBlur('email')}
@@ -50,11 +55,11 @@ export default function ForgotPasswordScreen() {
               autoCapitalize="none"
               keyboardType="email-address"
             />
-            <AppButton title="SEND INSTRUCTIONS" onPress={() => handleSubmit()} loading={loading} />
+            <AppButton title={t('sendInstructions')} onPress={() => handleSubmit()} loading={loading} />
           </>
         )}
       </Formik>
-      <Link href="/login" style={styles.link}>Back to sign in</Link>
+      <Link href="/login" style={styles.link}>{t('backToSignIn')}</Link>
     </ScrollView>
   );
 }

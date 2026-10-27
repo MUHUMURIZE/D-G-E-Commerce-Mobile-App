@@ -1,17 +1,19 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { ProductCard } from '@/components/product-card';
 import { palette } from '@/constants/palette';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { setFilters } from '@/redux/slices/productSlice';
 
 const priceRanges = [
-  { label: 'Any price', min: undefined, max: undefined },
-  { label: 'Under 100,000 RWF', min: undefined, max: 100000 },
-  { label: '100,000–180,000 RWF', min: 100000, max: 180000 },
-  { label: 'Over 180,000 RWF', min: 180000, max: undefined },
+  { key: 'anyPrice', min: undefined, max: undefined },
+  { key: 'underAmount', min: undefined, max: 100000 },
+  { key: 'betweenAmounts', min: 100000, max: 180000 },
+  { key: 'overAmount', min: 180000, max: undefined },
 ];
 
 export default function CategoriesScreen() {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const { items, filters } = useAppSelector((state) => state.products);
   const categories = Array.from(new Set(items.map((item) => item.category)));
@@ -19,37 +21,41 @@ export default function CategoriesScreen() {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Text style={styles.eyebrow}>THE COLLECTION</Text>
-      <Text style={styles.title}>Browse by category</Text>
+      <Text style={styles.eyebrow}>{t('featuredCollection')}</Text>
+      <Text style={styles.title}>{t('browseByCategory')}</Text>
       <View style={styles.options}>
-        {['All', ...categories].map((category) => {
-          const active = category === 'All' ? !filters.category : category === filters.category;
+        {['all', ...categories].map((category) => {
+          const active = category === 'all' ? !filters.category : category === filters.category;
           return (
             <Text
               key={category}
-              onPress={() => dispatch(setFilters({ ...filters, category: category === 'All' ? undefined : category }))}
+              onPress={() => dispatch(setFilters({ ...filters, category: category === 'all' ? undefined : category }))}
               style={[styles.option, active && styles.activeOption]}>
-              {category}
+              {category === 'all' ? t('all') : t(category)}
             </Text>
           );
         })}
       </View>
-      <Text style={styles.subTitle}>PRICE</Text>
+      <Text style={styles.subTitle}>{t('priceRwf')}</Text>
       <View style={styles.options}>
         {priceRanges.map((range, index) => (
           <Text
-            key={range.label}
+            key={range.key}
             onPress={() => dispatch(setFilters({
               ...filters,
               minPrice: range.min,
               maxPrice: range.max,
             }))}
             style={[styles.option, selectedPrice === index && styles.activeOption]}>
-            {range.label}
+            {range.key === 'anyPrice'
+              ? t(range.key)
+              : range.key === 'betweenAmounts'
+                ? t(range.key, { min: '100,000', max: '180,000' })
+                : t(range.key, { amount: range.key === 'underAmount' ? '100,000' : '180,000' })}
           </Text>
         ))}
       </View>
-      <Text style={styles.subTitle}>PRODUCTS · {items.length}</Text>
+      <Text style={styles.subTitle}>{t('productsCount', { count: items.length }).toUpperCase()}</Text>
       <View style={styles.grid}>
         {items.filter((product) =>
           (!filters.category || product.category === filters.category)

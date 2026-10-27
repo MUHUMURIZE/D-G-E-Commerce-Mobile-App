@@ -8,7 +8,10 @@ function isAuthSession(value: unknown): value is AuthSession {
   const session = value as Record<string, unknown>;
   if (typeof session.token !== 'string' || typeof session.user !== 'object' || session.user === null) return false;
   const user = session.user as Record<string, unknown>;
-  return typeof user.id === 'string' && typeof user.name === 'string' && typeof user.email === 'string';
+  return typeof user.id === 'string'
+    && typeof user.name === 'string'
+    && typeof user.email === 'string'
+    && (user.role === 'customer' || user.role === 'admin');
 }
 
 export async function readSession(): Promise<AuthSession | null> {

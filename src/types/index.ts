@@ -7,6 +7,7 @@ export interface Product {
   imageUrl: string;
   rating: number;
   availabilityStatus: string;
+  created_at?: string;
 }
 
 export interface CartItem {
@@ -24,22 +25,42 @@ export interface ShippingAddress {
 }
 
 export type PaymentMethod = 'mobile_money' | 'card' | 'cash_on_delivery';
-export type OrderStatus = 'placed' | 'confirmed' | 'shipped' | 'delivered';
+export type OrderStatus = 'Pending' | 'Confirmed' | 'Packing' | 'Shipped' | 'Delivered';
+
+export interface OrderLine {
+  id: string;
+  productId: string;
+  quantity: number;
+  unitPrice: number;
+}
 
 export interface Order {
   id: string;
-  items: CartItem[];
-  total: number;
-  address: ShippingAddress;
+  userId?: string;
+  items: OrderLine[];
+  totalAmount: number;
+  shippingAddress: ShippingAddress;
   paymentMethod: PaymentMethod;
   status: OrderStatus;
-  createdAt: string;
+  created_at: string;
+  updated_at?: string;
 }
 
 export interface User {
   id: string;
   name: string;
   email: string;
+  role: 'customer' | 'admin';
+  phone?: string | null;
+}
+
+export interface UserProfile {
+  id: string;
+  fullName: string;
+  email: string;
+  phone: string | null;
+  role: 'customer' | 'admin';
+  created_at: string;
 }
 
 export interface AuthSession {

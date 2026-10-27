@@ -3,15 +3,14 @@ import { Redirect } from 'expo-router';
 import { useAppSelector } from '@/redux/hooks';
 import { palette } from '@/constants/palette';
 
-export function AuthGate({ children, redirectTo }: {
+export function AuthGate({ children }: {
   children: React.ReactNode;
-  redirectTo?: '/checkout' | '/(tabs)/orders' | '/(tabs)/profile';
 }) {
   const { session, initialized } = useAppSelector((state) => state.auth);
   if (!initialized) {
     return <View style={styles.loading}><ActivityIndicator color={palette.gold} /></View>;
   }
-  if (!session) return <Redirect href={{ pathname: '/login', params: { returnTo: redirectTo } }} />;
+  if (!session) return <Redirect href="/login" />;
   return children;
 }
 
