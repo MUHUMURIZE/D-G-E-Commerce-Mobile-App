@@ -10,13 +10,14 @@ import { useNotifications } from '@/components/notification-center';
 import { OrderTimeline } from '@/components/order-timeline';
 import { palette } from '@/constants/palette';
 import { formatRwf } from '@/utils/formatCurrency';
+import { formatOrderDate } from '@/utils/formatDate';
 import type { OrderStatus } from '@/types';
 
 const statuses: OrderStatus[] = ['Pending', 'Confirmed', 'Packing', 'Shipped', 'Delivered'];
 
 export default function AdminOrderDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { notify } = useNotifications();
   const [order, setOrder] = useState<AdminOrder | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -73,6 +74,7 @@ export default function AdminOrderDetailsScreen() {
             <Text style={styles.customer}>{order.User?.fullName ?? order.userId}</Text>
             <Text style={adminStyles.muted}>{order.User?.email}</Text>
             <Text style={adminStyles.muted}>{formatRwf(order.totalAmount)}</Text>
+            <Text style={adminStyles.muted}>{formatOrderDate(order.created_at, i18n.resolvedLanguage ?? i18n.language)}</Text>
             <Text style={adminStyles.muted}>{t('payment')}: {t(order.paymentMethod)}</Text>
             <Text style={adminStyles.muted}>{t('shippingAddress')}: {JSON.stringify(order.shippingAddress)}</Text>
           </View>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator, FlatList, ImageBackground, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View,
 } from 'react-native';
@@ -14,6 +14,7 @@ import { refreshProducts, setFilters } from '@/redux/slices/productSlice';
 import { fetchOrders } from '@/redux/slices/orderSlice';
 import { selectCartCount } from '@/redux/slices/cartSlice';
 import { formatRwf } from '@/utils/formatCurrency';
+import { formatOrderDate } from '@/utils/formatDate';
 import type { Order } from '@/types';
 
 export default function HomeScreen() {
@@ -27,7 +28,7 @@ export default function HomeScreen() {
 
   useEffect(() => {
     void dispatch(refreshProducts({}));
-    void dispatch(fetchOrders());
+    void dispatch(fetchOrders({}));
   }, [dispatch]);
 
   const visibleProducts = useMemo(() => {
@@ -39,18 +40,21 @@ export default function HomeScreen() {
       && (filters.maxPrice === undefined || product.price <= filters.maxPrice));
   }, [filters.category, filters.maxPrice, filters.minPrice, items, search]);
 
-  const categories = ['All', ...Array.from(new Set(items.map((item) => item.category)))];
-  const newArrivals = [...items].sort((left, right) =>
-    new Date(right.created_at ?? 0).getTime() - new Date(left.created_at ?? 0).getTime());
-  const recentOrders = [...orders].sort((left, right) =>
-    new Date(right.created_at).getTime() - new Date(left.created_at).getTime()).slice(0, 2);
-  const pendingCount = orders.filter((order) => order.status === 'Pending').length;
-  const deliveredCount = orders.filter((order) => order.status === 'Delivered').length;
+  const categories = useMemo(() => ['All', ...Array.from(new Set(items.map((item) => item.category)))], [items]);
+  const newArrivals = useMemo(() => [...items].sort((left, right) =>
+    new Date(right.created_at ?? 0).getTime() - new Date(left.created_at ?? 0).getTime()), [items]);
+  const recentOrders = useMemo(() => [...orders].sort((left, right) =>
+    new Date(right.created_at).getTime() - new Date(left.created_at).getTime()).slice(0, 2), [orders]);
+  const pendingCount = useMemo(() => orders.filter((order) => order.status === 'Pending').length, [orders]);
+  const deliveredCount = useMemo(() => orders.filter((order) => order.status === 'Delivered').length, [orders]);
 
-  const refresh = () => {
-    void dispatch(refreshProducts({}));
-    void dispatch(fetchOrders());
-  };
+  const refresh = useCallback(() => {
+    void dispatch(refreshProducts({ force: true }));
+    void dispatch(fetchOrders({ force: true }));
+  }, [dispatch]);
+  const openCategories = useCallback(() => router.push('/(tabs)/categories'), []);
+  const openCart = useCallback(() => router.push('/(tabs)/cart'), []);
+  const openOrders = useCallback(() => router.push('/(tabs)/orders'), []);
 
   return (
     <FlatList
@@ -77,9 +81,9 @@ export default function HomeScreen() {
             </View>
             <Text style={styles.quickActionsHeading}>{t('quickActions')}</Text>
             <View style={styles.quickActions}>
-              <QuickAction icon="🛍️" label={t('browseProducts')} onPress={() => router.push('/(tabs)/categories')} />
-              <QuickAction icon="🛒" label={t('viewCartCount', { count: cartCount })} onPress={() => router.push('/(tabs)/cart')} />
-              <QuickAction icon="📦" label={t('viewOrders')} onPress={() => router.push('/(tabs)/orders')} />
+              <QuickAction icon="🛍️" label={t('browseProducts')} onPress={openCategories} />
+              <QuickAction icon="🛒" label={t('viewCartCount', { count: cartCount })} onPress={openCart} />
+              <QuickAction icon="📦" label={t('viewOrders')} onPress={openOrders} />
             </View>
             {ordersLoading && !orders.length ? <ActivityIndicator style={styles.ordersLoading} color={palette.gold} /> : null}
             {ordersError ? <Message error>{ordersError}</Message> : null}
@@ -87,7 +91,7 @@ export default function HomeScreen() {
               <Text style={styles.noRecentOrders}>{t('noOrdersBody')}</Text>
             ) : null}
             {recentOrders.map((order) => (
-              <RecentOrder key={order.id} order={order} onPress={() => router.push({ pathname: '/order/[id]', params: { id: order.id } })} />
+              <RecentOrder key={order.id} order={order} />
             ))}
             <Pressable
               accessibilityRole="button"
@@ -167,7 +171,7 @@ export default function HomeScreen() {
   );
 }
 
-function ActivityStat({ label, value, tone }: { label: string; value: number; tone: 'pending' | 'delivered' | 'total' }) {
+const ActivityStat = memo(function ActivityStat({ label, value, tone }: { label: string; value: number; tone: 'pending' | 'delivered' | 'total' }) {
   return (
     <View style={styles.stat}>
       <Text style={[styles.statValue, tone === 'pending' && styles.pendingValue, tone === 'delivered' && styles.deliveredValue]}>
@@ -176,19 +180,22 @@ function ActivityStat({ label, value, tone }: { label: string; value: number; to
       <Text numberOfLines={1} style={styles.statLabel}>{label}</Text>
     </View>
   );
-}
+});
 
-function QuickAction({ icon, label, onPress }: { icon: string; label: string; onPress: () => void }) {
+const QuickAction = memo(function QuickAction({ icon, label, onPress }: { icon: string; label: string; onPress: () => void }) {
   return (
     <Pressable accessibilityRole="button" onPress={onPress} style={styles.quickAction}>
       <Text style={styles.quickActionIcon}>{icon}</Text>
       <Text numberOfLines={2} style={styles.quickActionText}>{label}</Text>
     </Pressable>
   );
-}
+});
 
-function RecentOrder({ order, onPress }: { order: Order; onPress: () => void }) {
-  const { t } = useTranslation();
+const RecentOrder = memo(function RecentOrder({ order }: { order: Order }) {
+  const { t, i18n } = useTranslation();
+  const onPress = useCallback(() => {
+    router.push({ pathname: '/order/[id]', params: { id: order.id } });
+  }, [order.id]);
   return (
     <Pressable accessibilityRole="button" onPress={onPress} style={styles.orderCard}>
       <View style={styles.orderHead}>
@@ -198,11 +205,11 @@ function RecentOrder({ order, onPress }: { order: Order; onPress: () => void }) 
         </Text>
       </View>
       <Text style={styles.orderMeta}>
-        {new Date(order.created_at).toLocaleDateString()}  ·  {formatRwf(order.totalAmount)}
+        {formatOrderDate(order.created_at, i18n.resolvedLanguage ?? i18n.language)}  ·  {formatRwf(order.totalAmount)}
       </Text>
     </Pressable>
   );
-}
+});
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: palette.paper },

@@ -45,7 +45,7 @@ export default function CartScreen() {
               || (availableQuantity !== undefined && quantity >= availableQuantity);
             return (
               <View key={product.id} style={styles.item}>
-                <Image source={{ uri: resolveImageUrl(product.imageUrl) }} style={styles.image} contentFit="cover" />
+                <Image source={{ uri: resolveImageUrl(product.imageUrl) }} style={styles.image} contentFit="cover" cachePolicy="memory-disk" />
                 <View style={styles.details}>
                   <Text style={styles.category}>{t(product.category).toUpperCase()}</Text>
                   <Text style={styles.name}>{product.name}</Text>

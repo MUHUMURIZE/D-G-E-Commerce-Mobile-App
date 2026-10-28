@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, Platform, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -12,8 +12,11 @@ import { useNotifications } from '@/components/notification-center';
 import { palette } from '@/constants/palette';
 import { formatRwf } from '@/utils/formatCurrency';
 import { resolveImageUrl } from '@/utils/imageUrl';
+import { useAppDispatch } from '@/redux/hooks';
+import { removeProduct } from '@/redux/slices/productSlice';
 
 export default function AdminProductsScreen() {
+  const dispatch = useAppDispatch();
   const { t } = useTranslation();
   const { notify } = useNotifications();
   const [products, setProducts] = useState<AdminProduct[]>([]);
@@ -44,27 +47,32 @@ export default function AdminProductsScreen() {
     return matchesSearch && matchesStock;
   }), [products, search, stockFilter]);
 
-  const confirmDelete = (product: AdminProduct) => Alert.alert(
-    t('deleteProduct'),
-    t('deleteConfirm'),
-    [
+  const deleteProduct = useCallback(async (product: AdminProduct) => {
+    try {
+      await adminService.deleteProduct(product.id);
+      dispatch(removeProduct(product.id));
+      notify(t('productDeleted'));
+      await load();
+    } catch (reason: unknown) {
+      const message = reason instanceof Error ? reason.message : t('deleteFailed');
+      setError(message);
+      notify(message, 'error');
+    }
+  }, [dispatch, load, notify, t]);
+
+  const confirmDelete = useCallback((product: AdminProduct) => {
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && window.confirm(`${t('deleteProduct')}\n${t('deleteConfirm')}`)) {
+        void deleteProduct(product);
+      }
+      return;
+    }
+
+    Alert.alert(t('deleteProduct'), t('deleteConfirm'), [
       { text: t('cancel'), style: 'cancel' },
-      {
-        text: t('delete'),
-        style: 'destructive',
-        onPress: () => {
-          void adminService.deleteProduct(product.id).then(() => {
-            notify(t('productDeleted'));
-            void load();
-          }).catch((reason: unknown) => {
-            const message = reason instanceof Error ? reason.message : t('deleteFailed');
-            setError(message);
-            notify(message, 'error');
-          });
-        },
-      },
-    ],
-  );
+      { text: t('delete'), style: 'destructive', onPress: () => { void deleteProduct(product); } },
+    ]);
+  }, [deleteProduct, t]);
 
   return (
     <FlatList
@@ -108,7 +116,7 @@ export default function AdminProductsScreen() {
       renderItem={({ item }) => (
         <View style={adminStyles.card}>
           <View style={adminStyles.row}>
-            <Image source={{ uri: resolveImageUrl(item.imageUrl) }} style={styles.image} contentFit="cover" />
+            <Image source={{ uri: resolveImageUrl(item.imageUrl) }} style={styles.image} contentFit="cover" cachePolicy="memory-disk" />
             <View style={styles.info}>
               <Text style={styles.name}>{item.name}</Text>
               <Text style={adminStyles.muted}>{t(item.category)}</Text>

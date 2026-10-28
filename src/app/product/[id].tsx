@@ -84,7 +84,7 @@ export default function ProductDetailsScreen() {
       <Text style={styles.back} onPress={() => navigateBack('/(tabs)')}>‹  {t('back')}</Text>
       {error ? <Message error>{error}</Message> : null}
       <View style={styles.productCard}>
-        <Image source={{ uri: resolveImageUrl(product.imageUrl) }} style={styles.image} contentFit="cover" />
+        <Image source={{ uri: resolveImageUrl(product.imageUrl) }} style={styles.image} contentFit="cover" cachePolicy="memory-disk" />
         <View style={styles.productInfo}>
           <Text style={styles.category}>{t(product.category).toUpperCase()}</Text>
           <Text style={styles.name}>{product.name}</Text>

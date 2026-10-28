@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -6,21 +6,23 @@ import { AuthGate } from '@/components/auth-gate';
 import { EmptyState, Message } from '@/components/ui/message';
 import { palette } from '@/constants/palette';
 import { formatRwf } from '@/utils/formatCurrency';
+import { formatOrderDate } from '@/utils/formatDate';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { fetchOrders } from '@/redux/slices/orderSlice';
 
 function OrdersContent() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const dispatch = useAppDispatch();
   const { items, loading, error } = useAppSelector((state) => state.orders);
 
-  useEffect(() => { void dispatch(fetchOrders()); }, [dispatch]);
+  useEffect(() => { void dispatch(fetchOrders({})); }, [dispatch]);
+  const refresh = useCallback(() => { void dispatch(fetchOrders({ force: true })); }, [dispatch]);
 
   return (
     <ScrollView
       style={styles.screen}
       contentContainerStyle={styles.content}
-      refreshControl={<RefreshControl refreshing={loading} onRefresh={() => { void dispatch(fetchOrders()); }} tintColor={palette.gold} />}>
+      refreshControl={<RefreshControl refreshing={loading} onRefresh={refresh} tintColor={palette.gold} />}>
       <Text style={styles.eyebrow}>{t('account')}</Text>
       <Text style={styles.title}>{t('orderHistory')}</Text>
       {loading && !items.length ? <ActivityIndicator color={palette.gold} /> : null}
@@ -37,7 +39,7 @@ function OrdersContent() {
             <Text style={styles.orderId}>{t('orderId', { id: order.id.slice(-8).toUpperCase() })}</Text>
             <Text style={styles.status}>{t(order.status.toLowerCase()).toUpperCase()}</Text>
           </View>
-          <Text style={styles.date}>{new Date(order.created_at).toLocaleDateString()}</Text>
+          <Text style={styles.date}>{formatOrderDate(order.created_at, i18n.resolvedLanguage ?? i18n.language)}</Text>
           <Text style={styles.amount}>{formatRwf(order.totalAmount)}</Text>
           <Text style={styles.details}>{t('viewDetails')}  ›</Text>
         </Pressable>

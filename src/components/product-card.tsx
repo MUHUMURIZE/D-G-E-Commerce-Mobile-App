@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { memo, useCallback, useState } from 'react';
 import { Image } from 'expo-image';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
@@ -12,7 +12,7 @@ import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { addProductQuantity } from '@/redux/slices/cartSlice';
 import type { Product } from '@/types';
 
-export function ProductCard({ product }: { product: Product }) {
+export const ProductCard = memo(function ProductCard({ product }: { product: Product }) {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const { notify } = useNotifications();
@@ -30,19 +30,33 @@ export function ProductCard({ product }: { product: Product }) {
     : product.availabilityStatus.startsWith('Only ')
       ? t('onlyLeft', { count: product.availabilityStatus.match(/\d+/)?.[0] })
       : t('inStock');
+  const openProduct = useCallback(() => {
+    router.push({ pathname: '/product/[id]', params: { id: product.id } });
+  }, [product.id]);
+  const decreaseQuantity = useCallback(() => {
+    setQuantity((current) => Math.max(1, current - 1));
+  }, []);
+  const increaseQuantity = useCallback(() => {
+    setQuantity((current) => Math.min(current + 1, remainingQuantity));
+  }, [remainingQuantity]);
+  const addToBag = useCallback(() => {
+    dispatch(addProductQuantity({ product, quantity: selectedQuantity }));
+    notify(t('addedToCart'));
+  }, [dispatch, notify, product, selectedQuantity, t]);
 
   return (
     <View style={styles.card}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`${product.name}, ${product.price} Rwandan francs`}
-        onPress={() => router.push({ pathname: '/product/[id]', params: { id: product.id } })}
+        onPress={openProduct}
         style={({ pressed }) => [pressed && styles.pressed]}>
         <View style={styles.imageWrap}>
           <Image
             source={{ uri: resolveImageUrl(product.imageUrl) }}
             style={styles.image}
             contentFit="cover"
+            cachePolicy="memory-disk"
           />
           {soldOut ? (
             <View style={styles.outBadge}><Text style={styles.outBadgeText}>{t('outOfStock')}</Text></View>
@@ -61,7 +75,7 @@ export function ProductCard({ product }: { product: Product }) {
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={t('decreaseQuantity')}
-              onPress={() => setQuantity((current) => Math.max(1, current - 1))}
+              onPress={decreaseQuantity}
               style={styles.stepButton}>
               <Text style={styles.stepText}>−</Text>
             </Pressable>
@@ -71,7 +85,7 @@ export function ProductCard({ product }: { product: Product }) {
               accessibilityLabel={t('increaseQuantity')}
               accessibilityState={{ disabled: selectedQuantity >= remainingQuantity }}
               disabled={selectedQuantity >= remainingQuantity}
-              onPress={() => setQuantity((current) => Math.min(current + 1, remainingQuantity))}
+              onPress={increaseQuantity}
               style={[styles.stepButton, selectedQuantity >= remainingQuantity && styles.disabledStep]}>
               <Text style={styles.stepText}>+</Text>
             </Pressable>
@@ -79,10 +93,7 @@ export function ProductCard({ product }: { product: Product }) {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={t('addToBag')}
-            onPress={() => {
-              dispatch(addProductQuantity({ product, quantity: selectedQuantity }));
-              notify(t('addedToCart'));
-            }}
+            onPress={addToBag}
             style={styles.addButton}>
             <Text style={styles.addButtonText}>{t('addToBag')}</Text>
           </Pressable>
@@ -90,7 +101,7 @@ export function ProductCard({ product }: { product: Product }) {
       ) : null}
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   card: { flex: 1, marginBottom: 18, minWidth: 0, padding: 8, borderRadius: 18, backgroundColor: palette.white, borderWidth: 1, borderColor: palette.line, shadowColor: palette.shadow, shadowOpacity: 0.05, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 2 },

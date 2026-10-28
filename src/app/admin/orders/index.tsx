@@ -8,9 +8,10 @@ import { AppInput } from '@/components/ui/app-input';
 import { EmptyState, Message } from '@/components/ui/message';
 import { palette } from '@/constants/palette';
 import { formatRwf } from '@/utils/formatCurrency';
+import { formatOrderDate } from '@/utils/formatDate';
 
 export default function AdminOrdersScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [search, setSearch] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -62,6 +63,7 @@ export default function AdminOrdersScreen() {
             <Text style={styles.status}>{t(item.status.toLowerCase())}</Text>
           </View>
           <Text style={styles.customer}>{item.User?.fullName ?? item.userId}</Text>
+          <Text style={adminStyles.muted}>{formatOrderDate(item.created_at, i18n.resolvedLanguage ?? i18n.language)}</Text>
           <Text style={adminStyles.muted}>{formatRwf(item.totalAmount)} · {item.items.length} {t('items').toLowerCase()}</Text>
         </Pressable>
       )}

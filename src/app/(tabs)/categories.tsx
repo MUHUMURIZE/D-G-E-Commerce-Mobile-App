@@ -20,15 +20,23 @@ export default function CategoriesScreen() {
   const { items, filters, loading, error } = useAppSelector((state) => state.products);
   useEffect(() => { void dispatch(refreshProducts({})); }, [dispatch]);
 
-  const categories = useMemo(
-    () => Array.from(new Set(items.map((product) => product.category.trim()).filter(Boolean))).sort((a, b) => a.localeCompare(b)),
-    [items],
-  );
+  const { categories, categoryCounts } = useMemo(() => {
+    const counts = new Map<string, number>();
+    items.forEach((product) => {
+      const category = product.category.trim();
+      if (category) counts.set(category, (counts.get(category) ?? 0) + 1);
+    });
+    return {
+      categories: Array.from(counts.keys()).sort((a, b) => a.localeCompare(b)),
+      categoryCounts: counts,
+    };
+  }, [items]);
   const selectedPrice = priceRanges.findIndex((range) => range.min === filters.minPrice && range.max === filters.maxPrice);
-  const filteredProducts = items.filter((product) =>
+  const filteredProducts = useMemo(() => items.filter((product) =>
     (!filters.category || product.category === filters.category)
     && (filters.minPrice === undefined || product.price >= filters.minPrice)
-    && (filters.maxPrice === undefined || product.price <= filters.maxPrice));
+    && (filters.maxPrice === undefined || product.price <= filters.maxPrice)),
+  [filters.category, filters.maxPrice, filters.minPrice, items]);
 
   return (
     <ScrollView
@@ -37,7 +45,7 @@ export default function CategoriesScreen() {
       refreshControl={
         <RefreshControl
           refreshing={loading}
-          onRefresh={() => { void dispatch(refreshProducts({})); }}
+          onRefresh={() => { void dispatch(refreshProducts({ force: true })); }}
           tintColor={palette.gold}
         />
       }>
@@ -57,7 +65,7 @@ export default function CategoriesScreen() {
               onPress={() => dispatch(setFilters({ ...filters, category: undefined }))}
             />
             {categories.map((category) => {
-              const count = items.filter((product) => product.category.trim() === category).length;
+              const count = categoryCounts.get(category) ?? 0;
               return (
                 <CategoryTile
                   key={category}
