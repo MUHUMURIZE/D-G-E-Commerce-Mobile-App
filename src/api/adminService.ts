@@ -28,6 +28,11 @@ export interface AdminOrder {
   User?: Pick<AdminUser, 'id' | 'fullName' | 'email' | 'phone'>;
 }
 
+type ApiAdminOrder = Omit<AdminOrder, 'created_at'> & {
+  createdAt: string;
+  created_at?: string;
+};
+
 export interface AdminDashboard {
   totalUsers: number;
   totalProducts: number;
@@ -54,6 +59,15 @@ function normalizeProduct(product: AdminProduct): AdminProduct {
     rating: Number(product.rating),
     stock: Number(product.stock),
     imageUrl: resolveImageUrl(product.imageUrl) ?? '',
+  };
+}
+
+function normalizeOrder(order: ApiAdminOrder): AdminOrder {
+  return {
+    ...order,
+    created_at: order.createdAt ?? order.created_at ?? '',
+    totalAmount: Number(order.totalAmount),
+    items: order.items.map((item) => ({ ...item, unitPrice: Number(item.unitPrice) })),
   };
 }
 
@@ -131,30 +145,18 @@ export const adminService = {
     await apiClient.delete(`/admin/users/${encodeURIComponent(id)}`);
   },
   async orders(): Promise<AdminOrder[]> {
-    const { data } = await apiClient.get<AdminOrder[]>('/admin/orders');
-    return data.map((order) => ({
-      ...order,
-      totalAmount: Number(order.totalAmount),
-      items: order.items.map((item) => ({ ...item, unitPrice: Number(item.unitPrice) })),
-    }));
+    const { data } = await apiClient.get<ApiAdminOrder[]>('/admin/orders');
+    return data.map(normalizeOrder);
   },
   async order(id: string): Promise<AdminOrder> {
-    const { data } = await apiClient.get<AdminOrder>(`/admin/orders/${encodeURIComponent(id)}`);
-    return {
-      ...data,
-      totalAmount: Number(data.totalAmount),
-      items: data.items.map((item) => ({ ...item, unitPrice: Number(item.unitPrice) })),
-    };
+    const { data } = await apiClient.get<ApiAdminOrder>(`/admin/orders/${encodeURIComponent(id)}`);
+    return normalizeOrder(data);
   },
   async updateOrderStatus(id: string, status: OrderStatus): Promise<AdminOrder> {
-    const { data } = await apiClient.put<AdminOrder>(
+    const { data } = await apiClient.put<ApiAdminOrder>(
       `/admin/orders/${encodeURIComponent(id)}/status`,
       { status },
     );
-    return {
-      ...data,
-      totalAmount: Number(data.totalAmount),
-      items: data.items.map((item) => ({ ...item, unitPrice: Number(item.unitPrice) })),
-    };
+    return normalizeOrder(data);
   },
 };

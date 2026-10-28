@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { orderService } from '@/api/orderService';
 import { productService } from '@/api/productService';
 import { AuthGate } from '@/components/auth-gate';
 import { OrderTimeline } from '@/components/order-timeline';
+import { ProductImage } from '@/components/product-image';
 import { Message } from '@/components/ui/message';
 import { palette } from '@/constants/palette';
 import { formatRwf } from '@/utils/formatCurrency';
@@ -122,7 +122,7 @@ function OrderLineCard({ item, cachedProduct }: { item: OrderLine; cachedProduct
   return (
     <View style={styles.itemCard}>
       {imageUrl ? (
-        <Image source={{ uri: imageUrl }} style={styles.itemImage} contentFit="cover" cachePolicy="memory-disk" />
+        <ProductImage uri={imageUrl} style={styles.itemImage} />
       ) : (
         <View style={styles.itemImagePlaceholder} />
       )}

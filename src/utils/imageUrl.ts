@@ -8,9 +8,9 @@ export function resolveImageUrl(path: string | null | undefined): string | undef
   if (!SERVER_BASE_URL) return undefined;
 
   try {
-    const normalizedPath = imagePath.replace(/\\/g, '/');
-    const baseUrl = new URL(SERVER_BASE_URL);
-    const url = new URL(normalizedPath, `${baseUrl.origin}/`);
+    const normalizedPath = imagePath.replace(/\\/g, '/').replace(/^\/+/, '');
+    const serverUrl = new URL(SERVER_BASE_URL);
+    const url = new URL(normalizedPath, `${serverUrl.origin}/`);
     return url.protocol === 'http:' || url.protocol === 'https:' ? url.toString() : undefined;
   } catch {
     return undefined;

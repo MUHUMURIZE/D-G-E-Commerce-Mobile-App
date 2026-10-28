@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, Platform, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
-import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { adminService, type AdminProduct } from '@/api/adminService';
+import { ProductImage } from '@/components/product-image';
 import { AdminHeader, adminStyles } from '@/components/admin/admin-header';
 import { AppButton } from '@/components/ui/app-button';
 import { AppInput } from '@/components/ui/app-input';
@@ -116,7 +116,7 @@ export default function AdminProductsScreen() {
       renderItem={({ item }) => (
         <View style={adminStyles.card}>
           <View style={adminStyles.row}>
-            <Image source={{ uri: resolveImageUrl(item.imageUrl) }} style={styles.image} contentFit="cover" cachePolicy="memory-disk" />
+            <ProductImage uri={resolveImageUrl(item.imageUrl)} style={styles.image} />
             <View style={styles.info}>
               <Text style={styles.name}>{item.name}</Text>
               <Text style={adminStyles.muted}>{t(item.category)}</Text>

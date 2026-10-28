@@ -20,13 +20,15 @@ interface ApiOrder {
     quantity: number;
     unitPrice: string | number;
   }[];
-  created_at: string;
+  createdAt: string;
+  created_at?: string;
   updated_at?: string;
 }
 
 function normalizeOrder(order: ApiOrder): Order {
   return {
     ...order,
+    created_at: order.createdAt ?? order.created_at ?? '',
     totalAmount: Number(order.totalAmount),
     items: (order.items ?? []).map((item) => ({ ...item, unitPrice: Number(item.unitPrice) })),
   };

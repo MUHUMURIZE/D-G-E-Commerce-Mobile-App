@@ -1,8 +1,8 @@
 import { memo, useCallback, useState } from 'react';
-import { Image } from 'expo-image';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { ProductImage } from '@/components/product-image';
 import { useNotifications } from '@/components/notification-center';
 import { palette } from '@/constants/palette';
 import { formatRwf } from '@/utils/formatCurrency';
@@ -52,12 +52,7 @@ export const ProductCard = memo(function ProductCard({ product }: { product: Pro
         onPress={openProduct}
         style={({ pressed }) => [pressed && styles.pressed]}>
         <View style={styles.imageWrap}>
-          <Image
-            source={{ uri: resolveImageUrl(product.imageUrl) }}
-            style={styles.image}
-            contentFit="cover"
-            cachePolicy="memory-disk"
-          />
+          <ProductImage uri={resolveImageUrl(product.imageUrl)} style={styles.image} />
           {soldOut ? (
             <View style={styles.outBadge}><Text style={styles.outBadgeText}>{t('outOfStock')}</Text></View>
           ) : null}
