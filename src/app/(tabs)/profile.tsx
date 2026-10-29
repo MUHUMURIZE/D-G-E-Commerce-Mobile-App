@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { router } from 'expo-router';
+import { router, type Href } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
 import { AuthGate } from '@/components/auth-gate';
@@ -13,6 +13,7 @@ import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { signOut } from '@/redux/slices/authSlice';
 import { authService } from '@/api/authService';
 import type { UserProfile } from '@/types';
+import { notificationService } from '@/api/notificationService';
 
 type ProfilePanel = 'language' | 'security' | 'help' | 'about' | null;
 
@@ -29,6 +30,7 @@ function ProfileContent() {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [openPanel, setOpenPanel] = useState<ProfilePanel>(null);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
 
   const loadProfile = useCallback(async () => {
     setLoading(true);
@@ -48,6 +50,25 @@ function ProfileContent() {
   }, [notify, t]);
 
   useEffect(() => { void Promise.resolve().then(loadProfile); }, [loadProfile]);
+
+  useEffect(() => {
+    if (session?.user.role !== 'customer') return undefined;
+    let active = true;
+    const refreshUnread = async () => {
+      try {
+        const notifications = await notificationService.list();
+        if (active) setUnreadNotifications(notifications.filter((item) => !item.readAt).length);
+      } catch (requestError) {
+        if (active) setError(requestError instanceof Error ? requestError.message : t('loadError'));
+      }
+    };
+    void refreshUnread();
+    const interval = setInterval(() => { void refreshUnread(); }, 30000);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [session?.user.role, t]);
 
   const changeLanguage = async (language: 'en' | 'rw' | 'fr') => {
     try {
@@ -122,7 +143,15 @@ function ProfileContent() {
         <MenuRow title={t('security')} onPress={() => setOpenPanel(openPanel === 'security' ? null : 'security')} />
         <MenuRow title={t('helpSupport')} onPress={() => setOpenPanel(openPanel === 'help' ? null : 'help')} />
         <MenuRow title={t('aboutApp')} onPress={() => setOpenPanel(openPanel === 'about' ? null : 'about')} />
-        <MenuRow title={t('viewNotifications')} onPress={() => router.push('/notifications')} />
+        {session?.user.role === 'customer' ? (
+          <MenuRow
+            title={`🔔 ${t('notificationTitle')} (${unreadNotifications})`}
+            onPress={() => router.push('/notifications')}
+          />
+        ) : null}
+        {session?.user.role === 'customer' ? (
+          <MenuRow title={t('myWishlist')} onPress={() => router.push('/(tabs)/wishlist' as Href)} />
+        ) : null}
       </View>
 
       {openPanel === 'language' ? (

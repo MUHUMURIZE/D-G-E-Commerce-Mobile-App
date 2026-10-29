@@ -5,6 +5,7 @@ import type { Product } from '@/types';
 interface ApiProduct extends Omit<Product, 'price' | 'rating' | 'imageUrl' | 'availabilityStatus'> {
   price: number | string;
   rating: number | string;
+  createdAt?: string;
   imageUrl?: string | null;
   availabilityStatus?: string;
   stock?: number | string;
@@ -25,6 +26,7 @@ function normalizeProduct(product: ApiProduct): Product {
   const stock = rawStock === undefined ? undefined : Number(rawStock);
   return {
     ...customerProduct,
+    created_at: product.createdAt ?? product.created_at,
     price: Number(product.price),
     rating: Number(product.rating),
     imageUrl: resolveImageUrl(product.imageUrl) ?? '',
@@ -48,7 +50,7 @@ export const productService = {
     let page = 1;
 
     while (true) {
-      const { data } = await apiClient.get<ProductListResponse | ApiProduct[]>('/products', {
+      const { data } = await apiClient.get<ProductListResponse | ApiProduct[]>('/v2/products', {
         params: { ...filters, page, limit: pageSize },
       });
       const pageItems = Array.isArray(data) ? data : data.items;
@@ -66,7 +68,16 @@ export const productService = {
     return products.map(normalizeProduct);
   },
   async getById(id: string): Promise<Product> {
-    const { data } = await apiClient.get<ApiProduct>(`/products/${encodeURIComponent(id)}`);
+    const { data } = await apiClient.get<ApiProduct>(`/v2/products/${encodeURIComponent(id)}`);
     return normalizeProduct(data);
+  },
+  async suggestions(query: string): Promise<{ id: string; name: string; category: string }[]> {
+    const { data } = await apiClient.get<{ id: string; name: string; category: string }[]>('/v2/products/suggestions', {
+      params: { q: query },
+    });
+    return data;
+  },
+  async recordView(id: string): Promise<void> {
+    await apiClient.post(`/v2/products/${encodeURIComponent(id)}/views`);
   },
 };

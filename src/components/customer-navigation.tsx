@@ -15,6 +15,8 @@ const links: { icon: string; label: string; route: Href }[] = [
   { icon: '📂', label: 'categories', route: '/(tabs)/categories' },
   { icon: '🛒', label: 'cart', route: '/(tabs)/cart' },
   { icon: '📦', label: 'orders', route: '/(tabs)/orders' },
+  { icon: '❤️', label: 'myWishlist', route: '/(tabs)/wishlist' as Href },
+  { icon: '🔔', label: 'notificationTitle', route: '/notifications' },
   { icon: '👤', label: 'profile', route: '/(tabs)/profile' },
 ];
 
@@ -98,6 +100,7 @@ export function CustomerNavigation() {
         <Stack.Screen name="cart" />
         <Stack.Screen name="orders" />
         <Stack.Screen name="profile" />
+        <Stack.Screen name="wishlist" />
       </Stack>
       {!desktop && drawerOpen ? (
         <View style={styles.drawerLayer}>

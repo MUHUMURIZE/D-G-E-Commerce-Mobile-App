@@ -1,5 +1,5 @@
 const { Op } = require("sequelize");
-const { CartItem, Order, OrderItem, Product, User } = require("../models");
+const { CartItem, Order, OrderItem, Product, User, notifyProductRestocked } = require("../models");
 const {
   createProduct,
   updateProduct,
@@ -78,6 +78,7 @@ async function restockProduct(productId, quantity) {
 
   await product.increment("stock", { by: quantity });
   await product.reload();
+  await notifyProductRestocked(product);
   return product;
 }
 

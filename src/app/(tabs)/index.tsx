@@ -15,7 +15,12 @@ import { fetchOrders } from '@/redux/slices/orderSlice';
 import { selectCartCount } from '@/redux/slices/cartSlice';
 import { formatRwf } from '@/utils/formatCurrency';
 import { formatOrderDate } from '@/utils/formatDate';
-import type { Order } from '@/types';
+import type { Order, ProductReview } from '@/types';
+import { productService } from '@/api/productService';
+import { reviewService } from '@/api/reviewService';
+import { notificationService } from '@/api/notificationService';
+import { useWishlist } from '@/components/wishlist-provider';
+import { useNotifications } from '@/components/notification-center';
 
 export default function HomeScreen() {
   const dispatch = useAppDispatch();
@@ -24,17 +29,62 @@ export default function HomeScreen() {
   const { session } = useAppSelector((state) => state.auth);
   const { items: orders, loading: ordersLoading, error: ordersError } = useAppSelector((state) => state.orders);
   const cartCount = useAppSelector((state) => selectCartCount(state.cart.items));
+  const { entries: wishlistEntries } = useWishlist();
+  const { notify } = useNotifications();
   const [search, setSearch] = useState(filters.search ?? '');
+  const [suggestions, setSuggestions] = useState<{ id: string; name: string; category: string }[]>([]);
+  const [recentReviews, setRecentReviews] = useState<ProductReview[]>([]);
+  const [reviewCount, setReviewCount] = useState(0);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     void dispatch(refreshProducts({}));
     void dispatch(fetchOrders({}));
   }, [dispatch]);
 
+  useEffect(() => {
+    const query = search.trim();
+    if (query.length < 2) return undefined;
+    let active = true;
+    const timeout = setTimeout(() => {
+      void productService.suggestions(query).then((result) => {
+        if (active) setSuggestions(result);
+      }).catch((requestError: unknown) => {
+        if (active) notify(requestError instanceof Error ? requestError.message : t('loadError'), 'error');
+      });
+    }, 250);
+    return () => {
+      active = false;
+      clearTimeout(timeout);
+    };
+  }, [notify, search, t]);
+
+  useEffect(() => {
+    let active = true;
+    const loadActivity = async () => {
+      try {
+        const [reviews, notifications] = await Promise.all([reviewService.mine(), notificationService.list()]);
+        if (active) {
+          setRecentReviews(reviews.slice(0, 2));
+          setReviewCount(reviews.length);
+          setUnreadCount(notifications.filter((notification) => !notification.readAt).length);
+        }
+      } catch (requestError) {
+        if (active) notify(requestError instanceof Error ? requestError.message : t('loadError'), 'error');
+      }
+    };
+    void loadActivity();
+    const interval = setInterval(() => { void loadActivity(); }, 30000);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [notify, t]);
+
   const visibleProducts = useMemo(() => {
     const query = search.trim().toLowerCase();
     return items.filter((product) =>
-      (!query || `${product.name} ${product.category}`.toLowerCase().includes(query))
+      (!query || `${product.name} ${product.category} ${product.description}`.toLowerCase().includes(query))
       && (!filters.category || product.category === filters.category)
       && (filters.minPrice === undefined || product.price >= filters.minPrice)
       && (filters.maxPrice === undefined || product.price <= filters.maxPrice));
@@ -79,6 +129,21 @@ export default function HomeScreen() {
               <ActivityStat label={t('deliveredOrders')} value={deliveredCount} tone="delivered" />
               <ActivityStat label={t('totalOrders')} value={orders.length} tone="total" />
             </View>
+            <View style={styles.statRow}>
+              <ActivityStat label={t('wishlistCount')} value={wishlistEntries.length} tone="total" />
+              <ActivityStat label={t('unreadNotifications')} value={unreadCount} tone="pending" />
+              <ActivityStat label={t('myReviews')} value={reviewCount} tone="delivered" />
+            </View>
+            {recentReviews.map((review) => (
+              <Pressable
+                key={review.id}
+                accessibilityRole="button"
+                onPress={() => review.Product?.id && router.push({ pathname: '/product/[id]', params: { id: review.Product.id } })}
+                style={styles.recentReview}>
+                <Text style={styles.recentReviewTitle}>{t('recentReview')}: {review.title}</Text>
+                <Text style={styles.recentReviewStatus}>{t(review.status === 'approved' ? 'approved' : 'reviewPending')}</Text>
+              </Pressable>
+            ))}
             <Text style={styles.quickActionsHeading}>{t('quickActions')}</Text>
             <View style={styles.quickActions}>
               <QuickAction icon="🛍️" label={t('browseProducts')} onPress={openCategories} />
@@ -114,9 +179,29 @@ export default function HomeScreen() {
               label={t('search')}
               placeholder={t('search')}
               value={search}
-              onChangeText={setSearch}
+              onChangeText={(value) => {
+                setSearch(value);
+                if (value.trim().length < 2) setSuggestions([]);
+              }}
               returnKeyType="search"
             />
+            {suggestions.length ? (
+              <View style={styles.suggestions}>
+                {suggestions.map((suggestion) => (
+                  <Pressable
+                    key={suggestion.id}
+                    accessibilityRole="button"
+                    onPress={() => {
+                      setSuggestions([]);
+                      router.push({ pathname: '/product/[id]', params: { id: suggestion.id } });
+                    }}
+                    style={styles.suggestion}>
+                    <Text style={styles.suggestionName}>{suggestion.name}</Text>
+                    <Text style={styles.suggestionCategory}>{t(suggestion.category)}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            ) : null}
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
             {categories.map((category) => {
@@ -220,7 +305,7 @@ const styles = StyleSheet.create({
   activity: { padding: 16, marginBottom: 18, borderRadius: 18, backgroundColor: palette.white, borderWidth: 1, borderColor: palette.line, shadowColor: palette.shadow, shadowOpacity: 0.05, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
   welcome: { color: palette.ink, fontSize: 20, fontWeight: '800' },
   activityCaption: { marginTop: 4, color: palette.muted, fontSize: 12 },
-  statRow: { flexDirection: 'row', gap: 9, marginTop: 16, marginBottom: 12 },
+  statRow: { flexDirection: 'row', gap: 9, marginTop: 12, marginBottom: 4 },
   stat: { flex: 1, minWidth: 0, alignItems: 'center', paddingVertical: 11, paddingHorizontal: 4, borderRadius: 12, backgroundColor: palette.paper },
   statValue: { color: palette.ink, fontSize: 19, fontWeight: '800' },
   statLabel: { marginTop: 4, color: palette.muted, fontSize: 9, textAlign: 'center' },
@@ -240,6 +325,9 @@ const styles = StyleSheet.create({
   orderMeta: { marginTop: 5, color: palette.muted, fontSize: 11 },
   viewOrders: { alignSelf: 'flex-start', marginTop: 10, paddingVertical: 5 },
   viewOrdersText: { color: palette.gold, fontSize: 12, fontWeight: '700' },
+  recentReview: { paddingVertical: 8, borderTopWidth: 1, borderTopColor: palette.line },
+  recentReviewTitle: { color: palette.ink, fontSize: 12, fontWeight: '700' },
+  recentReviewStatus: { marginTop: 3, color: palette.muted, fontSize: 10 },
   hero: { height: 240, justifyContent: 'flex-end', padding: 24, marginBottom: 18, borderRadius: 22, overflow: 'hidden', backgroundColor: '#334155' },
   heroImage: { borderRadius: 22 },
   heroShade: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.28)' },
@@ -247,6 +335,10 @@ const styles = StyleSheet.create({
   heroTitle: { fontSize: 27, fontWeight: '600', color: palette.white, marginBottom: 12 },
   heroCaption: { fontSize: 11, letterSpacing: 1.5, color: palette.white },
   search: { marginBottom: 12 },
+  suggestions: { marginTop: -7, marginBottom: 10, overflow: 'hidden', borderWidth: 1, borderColor: palette.line, borderRadius: 12, backgroundColor: palette.white },
+  suggestion: { minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, borderBottomWidth: 1, borderBottomColor: palette.line },
+  suggestionName: { flex: 1, color: palette.ink, fontSize: 13, fontWeight: '600' },
+  suggestionCategory: { color: palette.muted, fontSize: 11 },
   chips: { gap: 8, paddingVertical: 6 },
   chip: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, overflow: 'hidden', color: palette.ink, backgroundColor: palette.white, borderWidth: 1, borderColor: palette.line, fontSize: 12, fontWeight: '600' },
   selectedChip: { color: palette.white, backgroundColor: palette.gold, borderColor: palette.gold },

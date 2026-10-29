@@ -10,12 +10,15 @@ import { resolveImageUrl } from '@/utils/imageUrl';
 import { getAvailableQuantity } from '@/utils/inventory';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { addProductQuantity } from '@/redux/slices/cartSlice';
+import { useWishlist } from '@/components/wishlist-provider';
 import type { Product } from '@/types';
 
 export const ProductCard = memo(function ProductCard({ product }: { product: Product }) {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const { notify } = useNotifications();
+  const { productIds, toggle } = useWishlist();
+  const user = useAppSelector((state) => state.auth.session?.user);
   const [quantity, setQuantity] = useState(1);
   const cartQuantity = useAppSelector((state) =>
     state.cart.items.find((item) => item.product.id === product.id)?.quantity ?? 0);
@@ -61,9 +64,30 @@ export const ProductCard = memo(function ProductCard({ product }: { product: Pro
           <Text style={styles.category}>{t(product.category).toUpperCase()}</Text>
           <Text numberOfLines={1} style={styles.name}>{product.name}</Text>
           <Text style={styles.price}>{formatRwf(product.price)}</Text>
+          <Text style={styles.rating} accessibilityLabel={t('ratingSummary', {
+            rating: product.rating.toFixed(1), count: product.reviewCount ?? 0,
+          })}>
+            {'★'.repeat(Math.floor(product.rating))}{'☆'.repeat(5 - Math.floor(product.rating))}
+            {' '}{product.rating.toFixed(1)}
+          </Text>
+          <Text style={styles.reviewCount}>
+            {product.reviewCount ? t('basedOnReviews', { count: product.reviewCount }) : t('noReviews')}
+          </Text>
           <Text style={[styles.availability, soldOut && styles.outOfStock]}>{availability}</Text>
         </View>
       </Pressable>
+      {user?.role === 'customer' ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={productIds.has(product.id) ? t('removeFromWishlist') : t('addToWishlist')}
+          accessibilityState={{ selected: productIds.has(product.id) }}
+          onPress={() => { void toggle(product.id); }}
+          style={styles.wishlistButton}>
+          <Text style={[styles.wishlistGlyph, productIds.has(product.id) && styles.wishlisted]}>
+            {productIds.has(product.id) ? '♥' : '♡'}
+          </Text>
+        </Pressable>
+      ) : null}
       {!soldOut ? (
         <View style={styles.addControls}>
           <View style={styles.stepper}>
@@ -109,7 +133,12 @@ const styles = StyleSheet.create({
   category: { color: palette.muted, fontSize: 9, letterSpacing: 1.1 },
   name: { color: palette.ink, fontSize: 14, fontWeight: '700' },
   price: { color: palette.ink, fontSize: 14, fontWeight: '800' },
+  rating: { color: palette.gold, fontSize: 10, fontWeight: '700' },
+  reviewCount: { color: palette.muted, fontSize: 9 },
   availability: { color: palette.success, fontSize: 11, fontWeight: '600' },
+  wishlistButton: { position: 'absolute', top: 14, right: 14, width: 34, height: 34, alignItems: 'center', justifyContent: 'center', borderRadius: 17, backgroundColor: palette.white },
+  wishlistGlyph: { color: palette.ink, fontSize: 20 },
+  wishlisted: { color: palette.danger },
   outOfStock: { color: palette.danger, fontWeight: '700' },
   addControls: { gap: 7, paddingHorizontal: 4, paddingBottom: 4 },
   stepper: { height: 32, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderColor: palette.line, borderRadius: 9 },

@@ -10,6 +10,7 @@ const productRoutes = require("./routes/productRoutes");
 const cartRoutes = require("./routes/cartRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const v2Routes = require("./routes/v2Routes");
 const { errorHandler } = require("./middleware/errorHandler");
 
 const app = express();
@@ -42,6 +43,7 @@ app.use("/api/products", productRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/v2", v2Routes);
 
 app.use(
   "/api-docs",

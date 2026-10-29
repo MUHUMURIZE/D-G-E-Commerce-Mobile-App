@@ -11,6 +11,7 @@ import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { restoreSession, signOut } from '@/redux/slices/authSlice';
 import { palette } from '@/constants/palette';
 import { NotificationProvider } from '@/components/notification-center';
+import { WishlistProvider } from '@/components/wishlist-provider';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 
 function AppNavigator() {
@@ -48,13 +49,15 @@ function AppNavigator() {
     <>
       <StatusBar style="dark" />
       <NotificationProvider>
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: palette.paper, paddingTop: insets.top },
-          }}>
-          <Stack.Screen name="index" />
-        </Stack>
+        <WishlistProvider>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: palette.paper, paddingTop: insets.top },
+            }}>
+            <Stack.Screen name="index" />
+          </Stack>
+        </WishlistProvider>
       </NotificationProvider>
     </>
   );

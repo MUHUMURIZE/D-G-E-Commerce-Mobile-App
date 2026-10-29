@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { productService } from '@/api/productService';
@@ -12,12 +12,18 @@ import { navigateBack } from '@/utils/navigation';
 import { formatRwf } from '@/utils/formatCurrency';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { addToCart } from '@/redux/slices/cartSlice';
+import { useNotifications } from '@/components/notification-center';
+import { useWishlist } from '@/components/wishlist-provider';
+import { ProductReviewsSection } from '@/components/product-reviews';
 
 export default function ProductDetailsScreen() {
   const { t } = useTranslation();
   const { id } = useLocalSearchParams<{ id: string }>();
   const existing = useAppSelector((state) => state.products.items.find((item) => item.id === id));
   const dispatch = useAppDispatch();
+  const { notify } = useNotifications();
+  const { productIds, toggle } = useWishlist();
+  const user = useAppSelector((state) => state.auth.session?.user);
   const [result, setResult] = useState<{ id: string; product?: typeof existing; error?: string } | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -37,10 +43,17 @@ export default function ProductDetailsScreen() {
   }, [id, t]);
 
   useEffect(() => {
-    if (!existing) void Promise.resolve().then(loadProduct);
-  }, [existing, loadProduct]);
+    void Promise.resolve().then(loadProduct);
+  }, [loadProduct]);
 
-  const product = existing ?? (result?.id === id ? result.product : undefined);
+  useEffect(() => {
+    if (!id) return;
+    void productService.recordView(id).catch((requestError: unknown) => {
+      notify(requestError instanceof Error ? requestError.message : t('loadError'), 'error');
+    });
+  }, [id, notify, t]);
+
+  const product = result?.id === id ? result.product ?? existing : existing;
   const error = result?.id === id ? result.error : undefined;
   const loading = !existing && result?.id !== id;
   const availability = product?.availabilityStatus === 'Out Of Stock'
@@ -89,11 +102,27 @@ export default function ProductDetailsScreen() {
           <Text style={styles.category}>{t(product.category).toUpperCase()}</Text>
           <Text style={styles.name}>{product.name}</Text>
           <Text style={styles.price}>{formatRwf(product.price)}</Text>
-          <Text style={styles.rating}>★ {product.rating.toFixed(1)}  ·  {availability}</Text>
+          <Text style={styles.rating}>
+            {'★'.repeat(Math.floor(product.rating))}{'☆'.repeat(5 - Math.floor(product.rating))}
+            {' '}{product.rating.toFixed(1)}  ·  {product.reviewCount
+              ? t('basedOnReviews', { count: product.reviewCount })
+              : t('noReviews')}
+            {'  ·  '}{availability}
+          </Text>
           <View style={styles.divider} />
           <Text style={styles.descriptionTitle}>{t('description')}</Text>
           <Text style={styles.description}>{product.description}</Text>
           <Text style={styles.shipping}>{t('freeDelivery')}</Text>
+          {user?.role === 'customer' ? (
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => { void toggle(product.id); }}
+              style={styles.wishlist}>
+              <Text style={styles.wishlistText}>
+                {productIds.has(product.id) ? `♥ ${t('removeFromWishlist')}` : `♡ ${t('addToWishlist')}`}
+              </Text>
+            </Pressable>
+          ) : null}
           <AppButton
             title={product.availabilityStatus === 'Out Of Stock' ? t('outOfStock') : t('addToBag')}
             disabled={product.availabilityStatus === 'Out Of Stock'}
@@ -104,6 +133,7 @@ export default function ProductDetailsScreen() {
           />
         </View>
       </View>
+      <ProductReviewsSection productId={product.id} />
     </ScrollView>
   );
 }
@@ -125,4 +155,6 @@ const styles = StyleSheet.create({
   divider: { height: 1, backgroundColor: palette.line, marginVertical: 20 },
   description: { color: palette.ink, fontSize: 15, lineHeight: 24 },
   shipping: { color: palette.muted, marginTop: 18, marginBottom: 22, fontSize: 12 },
+  wishlist: { minHeight: 44, justifyContent: 'center', marginBottom: 10 },
+  wishlistText: { color: palette.gold, fontSize: 14, fontWeight: '700' },
 });

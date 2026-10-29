@@ -1,11 +1,23 @@
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
-CREATE TYPE user_role AS ENUM ('customer', 'admin');
-CREATE TYPE product_category AS ENUM (
-  'Clothes', 'Shoes', 'Bags', 'Jewellery', 'Cosmetics', 'Household Equipment'
-);
-CREATE TYPE order_status AS ENUM ('Pending', 'Confirmed', 'Packing', 'Shipped', 'Delivered');
-CREATE TYPE payment_method AS ENUM ('mobile_money', 'card', 'cash_on_delivery');
+DO $$ BEGIN
+  CREATE TYPE user_role AS ENUM ('customer', 'admin');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+DO $$ BEGIN
+  CREATE TYPE product_category AS ENUM (
+    'Clothes', 'Shoes', 'Bags', 'Jewellery', 'Cosmetics', 'Household Equipment'
+  );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+DO $$ BEGIN
+  CREATE TYPE order_status AS ENUM ('Pending', 'Confirmed', 'Packing', 'Shipped', 'Delivered');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+DO $$ BEGIN
+  CREATE TYPE payment_method AS ENUM ('mobile_money', 'card', 'cash_on_delivery');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -84,3 +96,48 @@ CREATE TABLE IF NOT EXISTS password_reset_tokens (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS password_reset_tokens_expires_idx ON password_reset_tokens(expires_at);
+
+CREATE TABLE IF NOT EXISTS reviews (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
+  title VARCHAR(120) NOT NULL,
+  comment TEXT NOT NULL,
+  status VARCHAR(16) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT reviews_user_product_unique UNIQUE (user_id, product_id)
+);
+CREATE INDEX IF NOT EXISTS reviews_product_status_created_idx ON reviews(product_id, status, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS wishlist_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT wishlist_user_product_unique UNIQUE (user_id, product_id)
+);
+
+CREATE TABLE IF NOT EXISTS notifications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  title VARCHAR(180) NOT NULL,
+  description TEXT NOT NULL,
+  type VARCHAR(32) NOT NULL,
+  entity_id UUID,
+  read_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS notifications_user_read_created_idx ON notifications(user_id, read_at, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS product_views (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS product_views_product_created_idx ON product_views(product_id, created_at DESC);

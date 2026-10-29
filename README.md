@@ -44,7 +44,7 @@ src/
 ├── api/                 # Axios client and typed auth/product/cart/order services
 ├── app/                 # Expo Router screens and tab layout
 │   ├── (tabs)/          # Authenticated customer home, categories, cart, orders, profile
-│   ├── admin/           # Role-protected dashboard, product, user, and order management
+│   ├── admin/           # Role-protected dashboard, product, user, order, and review management
 │   ├── login.tsx
 │   ├── register.tsx
 │   ├── checkout.tsx
@@ -66,7 +66,7 @@ The local `.env.example` contains both public endpoints for Expo Go on the curre
 
 The base URL is `EXPO_PUBLIC_API_URL`; the client uses a 15-second timeout and adds a stored JWT as a Bearer token. A 401 clears the saved session and dispatches logout. Network errors, timeouts, and server errors are surfaced to the screens.
 
-The app reuses its existing typed `authService`, `productService`, `cartService`, `orderService`, and `adminService` modules. The app expects these endpoints and response shapes:
+The app reuses its typed `authService`, `productService`, `cartService`, `orderService`, `adminService`, `reviewService`, `wishlistService`, and `notificationService` modules. The app expects these endpoints and response shapes:
 
 | Method | Endpoint | Expected response |
 | --- | --- | --- |
@@ -82,6 +82,28 @@ The app reuses its existing typed `authService`, `productService`, `cartService`
 | `GET` | `/orders/:id` | One authorized `Order` |
 
 Product, order, address, payment, and session fields are defined in `src/types/index.ts`. The catalog starts empty and is populated only from the backend; API failures are surfaced rather than replaced with demonstration data. Authentication, cart synchronization, and placing orders require the configured service.
+
+## Version 2 features
+
+Version 2 is additive: the existing authentication, cart, order, inventory, and Swagger endpoints remain available. New storage is added for reviews, wishlist items, notifications, and product views. The backend creates these models during startup; `backend/database/schema.sql` also contains their SQL definitions for explicit database setup.
+
+The mobile app uses these new endpoints under `/api/v2`:
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| `GET` | `/v2/products`, `/v2/products/:id` | Product data with published review averages and counts |
+| `GET` | `/v2/products/suggestions?q=...` | Search product name, category, and description |
+| `POST` | `/v2/products/:id/views` | Record a product view for analytics |
+| `GET`, `POST` | `/v2/products/:id/reviews` | Read published reviews and submit a purchased-product review |
+| `GET` | `/v2/reviews/me` | Customer's recent reviews |
+| `GET`, `POST`, `DELETE` | `/v2/wishlist` | View, add, and remove customer wishlist items |
+| `GET` | `/v2/notifications` | List notifications for the signed-in user |
+| `PATCH` | `/v2/notifications/:id/read`, `/v2/notifications/read-all` | Mark one or all notifications read |
+| `GET` | `/v2/admin/reviews?status=...` | Filter and moderate reviews |
+| `PATCH`, `DELETE` | `/v2/admin/reviews/:id/approve`, `/v2/admin/reviews/:id` | Approve or remove a review |
+| `GET` | `/v2/admin/analytics` | Selling, views, review, stock, monthly order, and revenue metrics |
+
+Review creation requires an authenticated customer with the product in their order history, and one review per customer/product is allowed. New reviews are pending until an administrator approves them; only approved reviews contribute to public ratings. Order creation/status changes, wishlist-related restocks, and review approval create persistent notifications. The notification and profile screens refresh unread counts periodically. Customer wishlist and notification pages are available from the customer navigation; review moderation and analytics are on the admin dashboard.
 
 ## State management
 

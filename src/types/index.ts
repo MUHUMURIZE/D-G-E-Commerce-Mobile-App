@@ -6,8 +6,44 @@ export interface Product {
   price: number;
   imageUrl: string;
   rating: number;
+  reviewCount?: number;
   availabilityStatus: string;
   created_at?: string;
+}
+
+export interface ProductReview {
+  id: string;
+  productId: string;
+  userId: string;
+  rating: number;
+  title: string;
+  comment: string;
+  status: 'pending' | 'approved';
+  created_at: string;
+  User?: { id: string; fullName: string; email?: string };
+  Product?: Pick<Product, 'id' | 'name' | 'imageUrl'>;
+}
+
+export interface ProductReviews {
+  items: ProductReview[];
+  canReview: boolean;
+  currentReview: ProductReview | null;
+}
+
+export interface WishlistEntry {
+  id: string;
+  productId: string;
+  Product: Product;
+}
+
+export interface AppNotification {
+  id: string;
+  title: string;
+  description: string;
+  type: string;
+  entityId: string | null;
+  readAt: string | null;
+  created_at: string;
 }
 
 export interface CartItem {

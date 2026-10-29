@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
+import type { Href } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { adminService, type AdminDashboard } from '@/api/adminService';
+import { adminService, type AdminAnalytics, type AdminDashboard } from '@/api/adminService';
 import { AdminHeader, adminStyles } from '@/components/admin/admin-header';
 import { AppButton } from '@/components/ui/app-button';
 import { EmptyState, Message } from '@/components/ui/message';
@@ -15,7 +16,9 @@ export default function AdminDashboardScreen() {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const [data, setData] = useState<AdminDashboard | null>(null);
+  const [analytics, setAnalytics] = useState<AdminAnalytics | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [analyticsError, setAnalyticsError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
@@ -23,6 +26,12 @@ export default function AdminDashboardScreen() {
     setError(null);
     try {
       setData(await adminService.dashboard());
+      setAnalyticsError(null);
+      try {
+        setAnalytics(await adminService.analytics());
+      } catch (requestError) {
+        setAnalyticsError(requestError instanceof Error ? requestError.message : t('loadError'));
+      }
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : t('loadError'));
     } finally {
@@ -58,10 +67,23 @@ export default function AdminDashboardScreen() {
           </View>
         ))}
       </View>
+      <Text style={styles.section}>{t('analytics')}</Text>
+      {analyticsError ? <Message error>{analyticsError}</Message> : null}
+      {analytics ? (
+        <>
+          <AnalyticsList title={t('topSellingProducts')} rows={analytics.topSellingProducts.map((item) => `${item.name} · ${item.unitsSold} ${t('unitsSold')}`)} />
+          <AnalyticsList title={t('mostViewedProducts')} rows={analytics.mostViewedProducts.map((item) => `${item.name} · ${item.views}`)} />
+          <AnalyticsList title={t('mostReviewedProducts')} rows={analytics.mostReviewedProducts.map((item) => `${item.name} · ${item.reviewCount}`)} />
+          <AnalyticsList title={t('lowestStockProducts')} rows={analytics.lowestStockProducts.map((item) => `${item.name} · ${item.stock}`)} />
+          <AnalyticsList title={t('monthlyOrders')} rows={analytics.monthlyOrders.map((item) => `${item.month} · ${item.orders}`)} />
+          <AnalyticsList title={t('monthlyRevenue')} rows={analytics.monthlyRevenue.map((item) => `${item.month} · ${formatRwf(item.revenue)}`)} />
+        </>
+      ) : null}
       <Text style={styles.section}>{t('inventory')}</Text>
       <AppButton title={t('allProducts')} onPress={() => router.push('/admin/products')} />
       <AppButton title={t('users')} secondary onPress={() => router.push('/admin/users')} />
       <AppButton title={t('customerOrders')} secondary onPress={() => router.push('/admin/orders')} />
+      <AppButton title={t('reviewsManagement')} secondary onPress={() => router.push('/admin/reviews' as Href)} />
       <AppButton title={t('createProduct')} variant="success" onPress={() => router.push('/admin/products/new')} />
       <AppButton title={t('signOut')} variant="danger" onPress={() => { void dispatch(signOut()); }} />
     </ScrollView>
@@ -89,4 +111,18 @@ const styles = StyleSheet.create({
   statLabel: { color: palette.muted, fontSize: 13, fontWeight: '600' },
   statValue: { color: palette.ink, fontSize: 24, fontWeight: '800' },
   section: { color: palette.ink, fontSize: 17, fontWeight: '700', marginTop: 8 },
+  analyticsCard: { padding: 14, marginBottom: 10, borderWidth: 1, borderColor: palette.line, borderRadius: 14, backgroundColor: palette.white },
+  analyticsTitle: { marginBottom: 7, color: palette.ink, fontSize: 14, fontWeight: '800' },
+  analyticsRow: { paddingVertical: 4, color: palette.muted, fontSize: 12 },
 });
+
+function AnalyticsList({ title, rows }: { title: string; rows: string[] }) {
+  return (
+    <View style={styles.analyticsCard}>
+      <Text style={styles.analyticsTitle}>{title}</Text>
+      {rows.length ? rows.map((row, index) => (
+        <Text key={`${title}-${index}`} style={styles.analyticsRow}>{row}</Text>
+      )) : <Text style={styles.analyticsRow}>—</Text>}
+    </View>
+  );
+}

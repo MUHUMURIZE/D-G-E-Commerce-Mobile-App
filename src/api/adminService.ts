@@ -42,6 +42,15 @@ export interface AdminDashboard {
   outOfStockProducts: number;
 }
 
+export interface AdminAnalytics {
+  topSellingProducts: { id: string; name: string; stock: number; unitsSold: number }[];
+  mostViewedProducts: { id: string; name: string; views: number }[];
+  mostReviewedProducts: { id: string; name: string; reviewCount: number }[];
+  lowestStockProducts: { id: string; name: string; stock: number }[];
+  monthlyOrders: { month: string; orders: number }[];
+  monthlyRevenue: { month: string; revenue: number }[];
+}
+
 export interface ProductInput {
   name: string;
   category: string;
@@ -92,6 +101,10 @@ function productFormData(input: ProductInput): FormData {
 export const adminService = {
   async dashboard(): Promise<AdminDashboard> {
     const { data } = await apiClient.get<AdminDashboard>('/admin/dashboard');
+    return data;
+  },
+  async analytics(): Promise<AdminAnalytics> {
+    const { data } = await apiClient.get<AdminAnalytics>('/v2/admin/analytics');
     return data;
   },
   async products(): Promise<AdminProduct[]> {
