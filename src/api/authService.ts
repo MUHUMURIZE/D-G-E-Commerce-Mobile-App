@@ -52,6 +52,9 @@ export const authService = {
   async forgotPassword(email: string): Promise<void> {
     await apiClient.post('/auth/forgot-password', { email });
   },
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    await apiClient.post('/auth/reset-password', { token, newPassword });
+  },
   async getProfile() {
     const { data } = await apiClient.get('/auth/profile');
     return data as import('@/types').UserProfile;

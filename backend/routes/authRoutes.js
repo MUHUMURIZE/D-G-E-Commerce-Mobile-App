@@ -2,7 +2,7 @@ const express = require('express');
 const { body } = require('express-validator');
 const { authenticateToken } = require('../middleware/auth');
 const { validateRequest } = require('../middleware/validateRequest');
-const { registerUser, loginUser, getProfile, updateProfile, forgotPassword, logoutUser } = require('../services/authService');
+const { registerUser, loginUser, getProfile, updateProfile, forgotPassword, resetPassword, logoutUser } = require('../services/authService');
 
 const router = express.Router();
 
@@ -95,6 +95,27 @@ router.post(
  *   post:
  *     tags: [Auth]
  *     summary: Request a password reset email
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email]
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: user@example.com
+ *     responses:
+ *       200:
+ *         description: Reset instructions sent when an account exists
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Message'
+ *       400:
+ *         description: Invalid email address
  */
 router.post(
   '/forgot-password',
@@ -103,6 +124,54 @@ router.post(
   async (req, res, next) => {
     try {
       const response = await forgotPassword(req.body.email);
+      res.json(response);
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+/**
+ * @openapi
+ * /api/auth/reset-password:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Reset a password using a reset token
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [token, newPassword]
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 example: 0123456789abcdef
+ *               newPassword:
+ *                 type: string
+ *                 format: password
+ *                 minLength: 8
+ *     responses:
+ *       200:
+ *         description: Password reset successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Message'
+ *       400:
+ *         description: Invalid, expired, or previously used token
+ */
+router.post(
+  '/reset-password',
+  [
+    body('token').isString().withMessage('A reset token is required.').bail().trim().notEmpty().withMessage('A reset token is required.'),
+    body('newPassword').isString().withMessage('Password must be at least 8 characters.').bail().isLength({ min: 8 }).withMessage('Password must be at least 8 characters.'),
+  ],
+  validateRequest,
+  async (req, res, next) => {
+    try {
+      const response = await resetPassword(req.body.token, req.body.newPassword);
       res.json(response);
     } catch (error) {
       next(error);

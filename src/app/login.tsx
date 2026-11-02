@@ -51,6 +51,7 @@ export default function LoginScreen() {
               secureTextEntry
               error={touched.password ? errors.password : undefined}
             />
+            <Link href="/forgot-password" style={styles.footerLink}>{t('forgotPassword')}</Link>
             <AppButton title={t('signIn')} onPress={() => handleSubmit()} loading={isLoading} />
           </View>
         )}

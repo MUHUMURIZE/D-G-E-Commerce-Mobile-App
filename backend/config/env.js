@@ -29,7 +29,7 @@ module.exports = {
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean),
-  passwordResetUrl: process.env.PASSWORD_RESET_URL || '',
+  passwordResetUrl: process.env.PASSWORD_RESET_URL || 'dgecommerceapp://reset-password',
   passwordResetTokenTtlMinutes: Number(process.env.PASSWORD_RESET_TOKEN_TTL_MINUTES || 30),
   smtp: configuredSmtpFields.length === smtpFields.length
     ? {

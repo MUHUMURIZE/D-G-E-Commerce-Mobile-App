@@ -2,7 +2,7 @@ const crypto = require('node:crypto');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const env = require('../config/env');
-const { User, RevokedToken, PasswordResetToken } = require('../models');
+const { sequelize, User, RevokedToken, PasswordResetToken } = require('../models');
 
 async function registerUser({ fullName, email, password, phone }) {
   const normalizedEmail = String(email || '').trim().toLowerCase();
@@ -104,6 +104,38 @@ async function forgotPassword(email) {
   return { message: 'If an account exists for that email, a reset link has been sent.' };
 }
 
+async function resetPassword(token, newPassword) {
+  if (typeof token !== 'string' || !token.trim() || typeof newPassword !== 'string' || newPassword.length < 8) {
+    throw createAppError(400, 'A valid reset token and a password of at least 8 characters are required.');
+  }
+
+  const tokenHash = crypto.createHash('sha256').update(token.trim()).digest('hex');
+  const now = new Date();
+
+  return sequelize.transaction(async (transaction) => {
+    const resetToken = await PasswordResetToken.findOne({
+      where: { tokenHash },
+      transaction,
+      lock: transaction.LOCK.UPDATE,
+    });
+
+    if (!resetToken || resetToken.usedAt || new Date(resetToken.expiresAt) <= now) {
+      throw createAppError(400, 'This password reset token is invalid or has expired.');
+    }
+
+    const user = await User.findByPk(resetToken.userId, { transaction });
+    if (!user) {
+      throw createAppError(400, 'This password reset token is invalid or has expired.');
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+    await user.update({ passwordHash }, { transaction });
+    await resetToken.update({ usedAt: now }, { transaction });
+
+    return { message: 'Password reset successfully.' };
+  });
+}
+
 async function logoutUser(token) {
   if (!token) {
     return { message: 'User logged out successfully.' };
@@ -152,5 +184,6 @@ module.exports = {
   getProfile,
   updateProfile,
   forgotPassword,
+  resetPassword,
   logoutUser,
 };

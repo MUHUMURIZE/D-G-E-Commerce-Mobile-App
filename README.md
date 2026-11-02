@@ -72,7 +72,8 @@ The app reuses its typed `authService`, `productService`, `cartService`, `orderS
 | --- | --- | --- |
 | `POST` | `/auth/login` | `{ "user": { "id": "...", "name": "...", "email": "..." }, "token": "..." }` |
 | `POST` | `/auth/register` | Same session response |
-| `POST` | `/auth/forgot-password` | Success response; body `{ "email": "..." }` |
+| `POST` | `/auth/forgot-password` | Request `{ "email": "user@example.com" }`; generic success response |
+| `POST` | `/auth/reset-password` | Request `{ "token": "...", "newPassword": "..." }`; one-time token success response |
 | `GET` | `/products` | `Product[]` (the client also accepts a paginated `{ "items": Product[] }` response); accepts `search`, `category`, `minPrice`, `maxPrice` query parameters |
 | `GET` | `/products/:id` | One `Product` |
 | `PUT` | `/cart` | Accepts `{ "items": CartItem[] }` |
